@@ -2,6 +2,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'app_settings.dart';
 import 'game_screen.dart';
 import 'achievement_screen.dart';
 
@@ -18,20 +19,36 @@ const List<Color> rainbowColors = [
   Color(0xFFFF00E6),
 ];
 
-class StereotypicalApp extends StatelessWidget {
+class StereotypicalApp extends StatefulWidget {
   const StereotypicalApp({super.key});
 
   @override
+  State<StereotypicalApp> createState() => _StereotypicalAppState();
+}
+
+class _StereotypicalAppState extends State<StereotypicalApp> {
+  final AppSettings _settings = AppSettings();
+
+  @override
+  void dispose() {
+    _settings.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Stereotypical',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        useMaterial3: true,
-        fontFamily: 'Arial',
+    return SettingsScope(
+      settings: _settings,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Stereotypical',
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          useMaterial3: true,
+          fontFamily: 'Arial',
+        ),
+        home: const MainMenu(),
       ),
-      home: const MainMenu(),
     );
   }
 }
@@ -47,15 +64,9 @@ class _MainMenuState extends State<MainMenu>
     with SingleTickerProviderStateMixin {
   late final AnimationController _rainbowController;
 
-  double musicVolume = 0.7;
-  double sfxVolume = 0.8;
+  late AppSettings _settings;
 
-  double previousMusicVolume = 0.7;
-  double previousSfxVolume = 0.8;
-
-  String language = 'English';
-
-  bool get isFilipino => language == 'Filipino';
+  bool get isFilipino => _settings.isFilipino;
 
   @override
   void initState() {
@@ -68,53 +79,16 @@ class _MainMenuState extends State<MainMenu>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    _settings = SettingsScope.of(context);
+  }
+
+  @override
   void dispose() {
     _rainbowController.dispose();
     super.dispose();
-  }
-
-  void toggleMusic() {
-    setState(() {
-      if (musicVolume > 0) {
-        previousMusicVolume = musicVolume;
-        musicVolume = 0;
-      } else {
-        musicVolume =
-        previousMusicVolume > 0 ? previousMusicVolume : 0.7;
-      }
-    });
-  }
-
-  void toggleSfx() {
-    setState(() {
-      if (sfxVolume > 0) {
-        previousSfxVolume = sfxVolume;
-        sfxVolume = 0;
-      } else {
-        sfxVolume =
-        previousSfxVolume > 0 ? previousSfxVolume : 0.8;
-      }
-    });
-  }
-
-  void changeMusicVolume(double value) {
-    setState(() {
-      musicVolume = value;
-
-      if (value > 0) {
-        previousMusicVolume = value;
-      }
-    });
-  }
-
-  void changeSfxVolume(double value) {
-    setState(() {
-      sfxVolume = value;
-
-      if (value > 0) {
-        previousSfxVolume = value;
-      }
-    });
   }
 
   @override
@@ -370,8 +344,9 @@ class _MainMenuState extends State<MainMenu>
         return Center(
           child: Material(
             color: Colors.transparent,
-            child: StatefulBuilder(
-              builder: (context, setDialogState) {
+            child: ListenableBuilder(
+              listenable: _settings,
+              builder: (context, _) {
                 return Padding(
                   padding: const EdgeInsets.all(20),
                   child: ClipRRect(
@@ -445,38 +420,30 @@ class _MainMenuState extends State<MainMenu>
                               _settingsSection('AUDIO'),
                               const SizedBox(height: 16),
                               _SettingsVolumeControl(
-                                icon: musicVolume == 0
+                                icon: _settings.musicVolume == 0
                                     ? Icons.music_off
                                     : Icons.music_note,
                                 title:
                                 isFilipino ? 'Musika' : 'Music',
-                                value: musicVolume,
+                                value: _settings.musicVolume,
                                 onChanged: (value) {
-                                  changeMusicVolume(value);
-                                  setDialogState(() {});
+                                  _settings.musicVolume = value;
                                 },
-                                onIconTap: () {
-                                  toggleMusic();
-                                  setDialogState(() {});
-                                },
+                                onIconTap: _settings.toggleMusic,
                               ),
                               const SizedBox(height: 12),
                               _SettingsVolumeControl(
-                                icon: sfxVolume == 0
+                                icon: _settings.sfxVolume == 0
                                     ? Icons.volume_off
                                     : Icons.volume_up,
                                 title: isFilipino
                                     ? 'Epekto ng Tunog'
                                     : 'Sound Effects',
-                                value: sfxVolume,
+                                value: _settings.sfxVolume,
                                 onChanged: (value) {
-                                  changeSfxVolume(value);
-                                  setDialogState(() {});
+                                  _settings.sfxVolume = value;
                                 },
-                                onIconTap: () {
-                                  toggleSfx();
-                                  setDialogState(() {});
-                                },
+                                onIconTap: _settings.toggleSfx,
                               ),
                               const SizedBox(height: 24),
                               _settingsSection(
@@ -488,13 +455,11 @@ class _MainMenuState extends State<MainMenu>
                                   Expanded(
                                     child: _SettingsLanguageButton(
                                       label: 'English',
-                                      selected:
-                                      language == 'English',
+                                      selected: _settings.language ==
+                                          AppSettings.english,
                                       onTap: () {
-                                        setState(() {
-                                          language = 'English';
-                                        });
-                                        setDialogState(() {});
+                                        _settings.language =
+                                            AppSettings.english;
                                       },
                                     ),
                                   ),
@@ -502,13 +467,11 @@ class _MainMenuState extends State<MainMenu>
                                   Expanded(
                                     child: _SettingsLanguageButton(
                                       label: 'Filipino',
-                                      selected:
-                                      language == 'Filipino',
+                                      selected: _settings.language ==
+                                          AppSettings.filipino,
                                       onTap: () {
-                                        setState(() {
-                                          language = 'Filipino';
-                                        });
-                                        setDialogState(() {});
+                                        _settings.language =
+                                            AppSettings.filipino;
                                       },
                                     ),
                                   ),

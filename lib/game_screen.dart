@@ -1,6 +1,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'app_settings.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -13,64 +14,39 @@ class _GameScreenState extends State<GameScreen> {
   double _dragOffset = 0;
   double _dragY = 0;
 
-  double _musicVolume = 0.7;
-  double _sfxVolume = 0.8;
-
-  double _previousMusicVolume = 0.7;
-  double _previousSfxVolume = 0.8;
-
   double _titleOffsetX = 0;
   double _titleOffsetY = 0;
 
-  String _language = 'English';
+  late AppSettings _settings;
+  String? _lastLanguage;
   String _swipeMessage = 'Swipe left or right';
 
   bool _isDragging = false;
   bool _isAnimatingOut = false;
 
-  bool get _isFilipino => _language == 'Filipino';
+  bool get _isFilipino => _settings.isFilipino;
 
-  void _toggleMusic() {
-    setState(() {
-      if (_musicVolume > 0) {
-        _previousMusicVolume = _musicVolume;
-        _musicVolume = 0;
-      } else {
-        _musicVolume =
-        _previousMusicVolume > 0 ? _previousMusicVolume : 0.7;
-      }
-    });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    _settings = SettingsScope.of(context);
+
+    if (_settings.language != _lastLanguage) {
+      _lastLanguage = _settings.language;
+      _swipeMessage = _isFilipino
+          ? 'Mag-swipe pakaliwa o pakanan'
+          : 'Swipe left or right';
+    }
   }
 
-  void _toggleSfx() {
+  void _setLanguage(String language) {
+    _settings.language = language;
+
     setState(() {
-      if (_sfxVolume > 0) {
-        _previousSfxVolume = _sfxVolume;
-        _sfxVolume = 0;
-      } else {
-        _sfxVolume =
-        _previousSfxVolume > 0 ? _previousSfxVolume : 0.8;
-      }
-    });
-  }
-
-  void _changeMusicVolume(double value) {
-    setState(() {
-      _musicVolume = value;
-
-      if (value > 0) {
-        _previousMusicVolume = value;
-      }
-    });
-  }
-
-  void _changeSfxVolume(double value) {
-    setState(() {
-      _sfxVolume = value;
-
-      if (value > 0) {
-        _previousSfxVolume = value;
-      }
+      _swipeMessage = _isFilipino
+          ? 'Mag-swipe pakaliwa o pakanan'
+          : 'Swipe left or right';
     });
   }
 
@@ -143,8 +119,9 @@ class _GameScreenState extends State<GameScreen> {
         return Center(
           child: Material(
             color: Colors.transparent,
-            child: StatefulBuilder(
-              builder: (context, setModalState) {
+            child: ListenableBuilder(
+              listenable: _settings,
+              builder: (context, _) {
                 return Padding(
                   padding: const EdgeInsets.all(20),
                   child: ClipRRect(
@@ -216,37 +193,29 @@ class _GameScreenState extends State<GameScreen> {
                               _sectionLabel('AUDIO'),
                               const SizedBox(height: 16),
                               _volumeControl(
-                                icon: _musicVolume == 0
+                                icon: _settings.musicVolume == 0
                                     ? Icons.music_off
                                     : Icons.music_note,
                                 title: _isFilipino ? 'Musika' : 'Music',
-                                value: _musicVolume,
+                                value: _settings.musicVolume,
                                 onChanged: (value) {
-                                  _changeMusicVolume(value);
-                                  setModalState(() {});
+                                  _settings.musicVolume = value;
                                 },
-                                onIconTap: () {
-                                  _toggleMusic();
-                                  setModalState(() {});
-                                },
+                                onIconTap: _settings.toggleMusic,
                               ),
                               const SizedBox(height: 12),
                               _volumeControl(
-                                icon: _sfxVolume == 0
+                                icon: _settings.sfxVolume == 0
                                     ? Icons.volume_off
                                     : Icons.volume_up,
                                 title: _isFilipino
                                     ? 'Epekto ng Tunog'
                                     : 'Sound Effects',
-                                value: _sfxVolume,
+                                value: _settings.sfxVolume,
                                 onChanged: (value) {
-                                  _changeSfxVolume(value);
-                                  setModalState(() {});
+                                  _settings.sfxVolume = value;
                                 },
-                                onIconTap: () {
-                                  _toggleSfx();
-                                  setModalState(() {});
-                                },
+                                onIconTap: _settings.toggleSfx,
                               ),
                               const SizedBox(height: 24),
                               _sectionLabel(
@@ -258,14 +227,10 @@ class _GameScreenState extends State<GameScreen> {
                                   Expanded(
                                     child: _languageButton(
                                       label: 'English',
-                                      selected: _language == 'English',
+                                      selected: _settings.language ==
+                                          AppSettings.english,
                                       onTap: () {
-                                        setState(() {
-                                          _language = 'English';
-                                          _swipeMessage =
-                                          'Swipe left or right';
-                                        });
-                                        setModalState(() {});
+                                        _setLanguage(AppSettings.english);
                                       },
                                     ),
                                   ),
@@ -273,14 +238,10 @@ class _GameScreenState extends State<GameScreen> {
                                   Expanded(
                                     child: _languageButton(
                                       label: 'Filipino',
-                                      selected: _language == 'Filipino',
+                                      selected: _settings.language ==
+                                          AppSettings.filipino,
                                       onTap: () {
-                                        setState(() {
-                                          _language = 'Filipino';
-                                          _swipeMessage =
-                                          'Mag-swipe pakaliwa o pakanan';
-                                        });
-                                        setModalState(() {});
+                                        _setLanguage(AppSettings.filipino);
                                       },
                                     ),
                                   ),
@@ -484,17 +445,20 @@ class _GameScreenState extends State<GameScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-      leading: Icon(icon, color: color),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w500,
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+        leading: Icon(icon, color: color),
+        title: Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+        onTap: onTap,
       ),
-      onTap: onTap,
     );
   }
 
