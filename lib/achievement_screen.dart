@@ -109,7 +109,7 @@ class AchievementScreen extends StatelessWidget {
                 border: Border.all(color: neonPink, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: neonPink.withOpacity(0.2),
+                    color: neonPink.withValues(alpha: 0.2),
                     blurRadius: 15,
                   ),
                 ],
@@ -204,7 +204,7 @@ class AchievementScreen extends StatelessWidget {
                           width: 54,
                           height: 54,
                           decoration: BoxDecoration(
-                            color: color.withOpacity(0.1),
+                            color: color.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(13),
                             border: Border.all(
                               color: completed ? color : Colors.white24,

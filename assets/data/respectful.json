@@ -1,0 +1,390 @@
+{
+  "schemaVersion": 1,
+ "defaultLanguage": "en",
+ "cards": [
+   {
+     "id": "respectful-workplace-001",
+     "kind": "respectful",
+     "target": "women",
+     "category": "workplace",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A coworker says: “Let's ask Mara — she led the project and knows the details.”",
+       "fil": "Sabi ng katrabaho: “Si Mara ang tanungin natin — siya ang namuno sa proyekto at alam niya ang mga detalye.”"
+     },
+     "explanation": {
+       "en": "It recognizes a woman's leadership and expertise without assuming a male colleague knows more.",
+       "fil": "Kinikilala nito ang pamumuno at kaalaman ng isang babae nang hindi ipinapalagay na mas maraming alam ang lalaking katrabaho."
+     }
+   },
+   {
+     "id": "respectful-workplace-002",
+     "kind": "respectful",
+     "target": "women",
+     "category": "workplace",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A supervisor says: “I'd like Ana to lead the team; her work shows she's ready.”",
+       "fil": "Sabi ng supervisor: “Gusto kong si Ana ang mamuno sa team; ipinapakita ng trabaho niya na handa na siya.”"
+     },
+     "explanation": {
+       "en": "It bases promotion and leadership opportunities on demonstrated ability rather than gender.",
+       "fil": "Ibinabatay nito ang oportunidad sa pamumuno sa kakayahan at nagawa, hindi sa kasarian."
+     }
+   },
+   {
+     "id": "respectful-workplace-003",
+     "kind": "respectful",
+     "target": "men",
+     "category": "workplace",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A colleague says: “He's our new nurse, and he'll be handling my shift.”",
+       "fil": "Sabi ng katrabaho: “Siya ang bago nating nurse at siya ang hahawak sa shift ko.”"
+     },
+     "explanation": {
+       "en": "It treats nursing as a profession open to men and women without making gender unusual.",
+       "fil": "Ipinapakita nitong bukas sa lahat ng kasarian ang propesyon ng nursing at hindi kailangang gawing kakaiba ang pagiging lalaking nurse."
+     }
+   },
+   {
+     "id": "respectful-workplace-004",
+     "kind": "respectful",
+     "target": "lgbtqia+",
+     "category": "workplace",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A team leader says: “I'll add your partner to the company dinner guest list.”",
+       "fil": "Sabi ng team leader: “Isasama ko sa guest list ng company dinner ang partner mo.”"
+     },
+     "explanation": {
+       "en": "It includes a colleague's partner without assuming their partner's gender or relationship type.",
+       "fil": "Isinasama nito ang partner ng katrabaho nang hindi ipinapalagay ang kasarian o uri ng kanilang relasyon."
+     }
+   },
+   {
+     "id": "respectful-home-005",
+     "kind": "respectful",
+     "target": "women",
+     "category": "home",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A husband says: “I'll cook tonight; you've had a long day too.”",
+       "fil": "Sabi ng isang asawa: “Ako na ang magluluto ngayong gabi; napagod ka rin sa maghapon.”"
+     },
+     "explanation": {
+       "en": "It shows that cooking and household responsibilities can be shared rather than assigned by gender.",
+       "fil": "Ipinapakita nitong puwedeng paghati-hatian ang pagluluto at gawaing-bahay sa halip na iatang ang mga ito batay sa kasarian."
+     }
+   },
+   {
+     "id": "respectful-home-006",
+     "kind": "respectful",
+     "target": "men",
+     "category": "home",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A father says: “I'm staying home with the baby today; we've got everything covered.”",
+       "fil": "Sabi ng isang ama: “Ako muna ang mag-aalaga kay baby ngayon; nakahanda na ang lahat.”"
+     },
+     "explanation": {
+       "en": "It presents fathers as equally capable of caring for their children.",
+       "fil": "Ipinapakita nitong kaya rin ng mga ama na alagaan ang kanilang mga anak."
+     }
+   },
+   {
+     "id": "respectful-home-007",
+     "kind": "respectful",
+     "target": "lgbtqia+",
+     "category": "home",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A grandmother says: “Tell your girlfriend to come over for dinner; she's family too.”",
+       "fil": "Sabi ng lola: “Isama mo ang girlfriend mo sa hapunan; pamilya na rin siya.”"
+     },
+     "explanation": {
+       "en": "It welcomes a same-sex partner into ordinary family life without treating the relationship as less valid.",
+       "fil": "Tinatanggap nito ang kaparehong kasariang partner bilang bahagi ng normal na buhay-pamilya."
+     }
+   },
+   {
+     "id": "respectful-home-008",
+     "kind": "respectful",
+     "target": "men",
+     "category": "home",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A brother says: “You can talk to me if you're having a hard time. I'm here.”",
+       "fil": "Sabi ng kuya: “Puwede kang magkuwento sa akin kung nahihirapan ka. Nandito lang ako.”"
+     },
+     "explanation": {
+       "en": "It makes emotional support available to men without expecting them to hide their feelings.",
+       "fil": "Ipinapakitang puwedeng magpahayag ng nararamdaman at humingi ng suporta ang mga lalaki."
+     }
+   },
+   {
+     "id": "respectful-school-009",
+     "kind": "respectful",
+     "target": "women",
+     "category": "school",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A teacher says: “Girls, sign up for robotics too. Everyone deserves a chance to build.”",
+       "fil": "Sabi ng guro: “Sumali rin kayo sa robotics, mga babae. Lahat ay dapat magkaroon ng pagkakataong bumuo at mag-eksperimento.”"
+     },
+     "explanation": {
+       "en": "It encourages girls to explore STEM instead of treating technical activities as belonging to boys.",
+       "fil": "Hinihikayat nito ang mga babae na subukan ang STEM sa halip na ituring itong larangan lamang ng mga lalaki."
+     }
+   },
+   {
+     "id": "respectful-school-010",
+     "kind": "respectful",
+     "target": "women",
+     "category": "school",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A coach says: “You earned your place on the varsity team. Keep training.”",
+       "fil": "Sabi ng coach: “Pinaghirapan mo ang puwesto mo sa varsity team. Ipagpatuloy mo ang training.”"
+     },
+     "explanation": {
+       "en": "It recognizes a female athlete's achievement without questioning whether she belongs in competitive sports.",
+       "fil": "Kinikilala nito ang tagumpay ng isang babaeng atleta nang hindi kinukuwestiyon kung nararapat siyang sumali sa kompetisyon."
+     }
+   },
+   {
+     "id": "respectful-school-011",
+     "kind": "respectful",
+     "target": "men",
+     "category": "school",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A classmate says: “It's okay to cry after losing. You worked hard for that game.”",
+       "fil": "Sabi ng kaklase: “Ayos lang umiyak kapag natalo. Pinaghirapan mo ang larong iyon.”"
+     },
+     "explanation": {
+       "en": "It allows boys and men to express disappointment without treating tears as a sign of weakness.",
+       "fil": "Pinahihintulutan nito ang mga lalaki na ipahayag ang lungkot nang hindi itinuturing na kahinaan ang pag-iyak."
+     }
+   },
+   {
+     "id": "respectful-school-012",
+     "kind": "respectful",
+     "target": "lgbtqia+",
+     "category": "school",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A class president says: “I'll use Alex's name and pronouns in the attendance list.”",
+       "fil": "Sabi ng class president: “Gagamitin ko ang pangalan at pronouns ni Alex sa attendance list.”"
+     },
+     "explanation": {
+       "en": "It respects a classmate's identity by using the name and pronouns they ask others to use.",
+       "fil": "Iginagalang nito ang pagkakakilanlan ng kaklase sa paggamit ng pangalan at pronouns na nais niyang gamitin."
+     }
+   },
+   {
+     "id": "respectful-school-013",
+     "kind": "respectful",
+     "target": "lgbtqia+",
+     "category": "school",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A friend says: “You don't have to explain who you like. We can just study together.”",
+       "fil": "Sabi ng kaibigan: “Hindi mo kailangang ipaliwanag kung sino ang gusto mo. Tara, mag-aral na lang tayo.”"
+     },
+     "explanation": {
+       "en": "It treats someone's orientation as personal information rather than something they owe others an explanation about.",
+       "fil": "Itinuturing nitong personal na bagay ang oryentasyon ng isang tao at hindi paliwanag na utang niya sa iba."
+     }
+   },
+   {
+     "id": "respectful-media-014",
+     "kind": "respectful",
+     "target": "women",
+     "category": "media",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "An online commenter says: “Let her finish explaining the science; she wrote the research.”",
+       "fil": "Sabi ng isang online commenter: “Pakinggan muna natin ang paliwanag niya sa science; siya ang nagsulat ng pananaliksik.”"
+     },
+     "explanation": {
+       "en": "It gives a woman space to share her own expertise instead of judging her credibility by gender.",
+       "fil": "Binibigyan nito ng pagkakataon ang isang babae na ibahagi ang kaniyang kaalaman nang hindi hinuhusgahan ang kredibilidad niya batay sa kasarian."
+     }
+   },
+   {
+     "id": "respectful-media-015",
+     "kind": "respectful",
+     "target": "men",
+     "category": "media",
+     "difficulty": 3,
+     "active": true,
+     "text": {
+       "en": "A viewer says: “I'd like to see more dads shown doing the everyday school runs.”",
+       "fil": "Sabi ng isang manonood: “Sana mas marami tayong makitang tatay na naghahatid at sumusundo sa mga anak sa paaralan.”"
+     },
+     "explanation": {
+       "en": "It recognizes fathers as everyday caregivers and broadens how parenting roles are represented.",
+       "fil": "Kinikilala nito ang mga ama bilang aktibong tagapag-alaga at pinalalawak ang paglalarawan sa mga papel ng magulang."
+     }
+   },
+   {
+     "id": "respectful-media-016",
+     "kind": "respectful",
+     "target": "lgbtqia+",
+     "category": "media",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A viewer says: “I like that the show lets the two husbands just be a normal family.”",
+       "fil": "Sabi ng isang manonood: “Gusto ko na ipinapakita ng palabas na normal na pamilya lang ang dalawang mag-asawang lalaki.”"
+     },
+     "explanation": {
+       "en": "It treats a same-sex couple as an ordinary family rather than making their relationship seem strange or exceptional.",
+       "fil": "Itinuturing nito ang magkaparehong kasariang mag-asawa bilang isang ordinaryong pamilya, hindi bilang kakaibang eksepsiyon."
+     }
+   },
+   {
+     "id": "respectful-media-017",
+     "kind": "respectful",
+     "target": "women",
+     "category": "media",
+     "difficulty": 3,
+     "active": true,
+     "text": {
+       "en": "A reader says: “Her review deserves attention because of its arguments, not her appearance.”",
+       "fil": "Sabi ng isang mambabasa: “Dapat pansinin ang review niya dahil sa mga argumento nito, hindi dahil sa hitsura niya.”"
+     },
+     "explanation": {
+       "en": "It evaluates a woman's contribution based on the quality of her ideas rather than her looks.",
+       "fil": "Sinusuri nito ang ambag ng isang babae batay sa kalidad ng kaniyang mga ideya, hindi sa kaniyang hitsura."
+     }
+   },
+   {
+     "id": "respectful-public-018",
+     "kind": "respectful",
+     "target": "women",
+     "category": "public",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A neighbor says: “She's the electrician we called. Please show her where the panel is.”",
+       "fil": "Sabi ng kapitbahay: “Siya ang electrician na tinawagan natin. Pakituro sa kaniya kung nasaan ang electrical panel.”"
+     },
+     "explanation": {
+       "en": "It accepts a woman as a skilled tradesperson without treating her profession as unusual.",
+       "fil": "Tinatanggap nito ang isang babae bilang bihasang manggagawa sa teknikal na larangan nang hindi ginagawang kakaiba ang propesyon niya."
+     }
+   },
+   {
+     "id": "respectful-public-019",
+     "kind": "respectful",
+     "target": "men",
+     "category": "public",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A parent says: “He's the preschool teacher my child talks about every day.”",
+       "fil": "Sabi ng isang magulang: “Siya ang guro sa preschool na laging kinukuwento ng anak ko.”"
+     },
+     "explanation": {
+       "en": "It presents men teaching young children as an ordinary and valid career choice.",
+       "fil": "Ipinapakita nitong normal at marangal na propesyon para sa mga lalaki ang pagtuturo sa maliliit na bata."
+     }
+   },
+   {
+     "id": "respectful-public-020",
+     "kind": "respectful",
+     "target": "lgbtqia+",
+     "category": "public",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A neighbor says: “That's my neighbor Sam and their partner. They just moved in.”",
+       "fil": "Sabi ng kapitbahay: “Si Sam ang kapitbahay natin at ito ang partner niya. Kakahanap lang nila rito.”"
+     },
+     "explanation": {
+       "en": "It introduces a nonbinary person and their partner naturally, without turning their identity into a spectacle.",
+       "fil": "Ipinakikilala nito nang natural ang isang nonbinary na tao at ang partner niya nang hindi ginagawang usap-usapan ang kanilang pagkakakilanlan."
+     }
+   },
+   {
+     "id": "respectful-public-021",
+     "kind": "respectful",
+     "target": "men",
+     "category": "public",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A passerby says: “He's pushing the stroller; his partner is picking up groceries.”",
+       "fil": "Sabi ng isang dumaraan: “Siya ang nagtutulak ng stroller; namimili naman ng groceries ang partner niya.”"
+     },
+     "explanation": {
+       "en": "It describes shared parenting and household tasks without assigning each responsibility by gender.",
+       "fil": "Inilalarawan nito ang paghahati ng responsibilidad sa pamilya nang hindi itinatakda ang gawain batay sa kasarian."
+     }
+   },
+   {
+     "id": "respectful-public-022",
+     "kind": "respectful",
+     "target": "lgbtqia+",
+     "category": "public",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A friend says: “You know yourself best. You don't need to wait for someone to change your mind.”",
+       "fil": "Sabi ng kaibigan: “Ikaw ang higit na nakakakilala sa sarili mo. Hindi mo kailangang maghintay ng taong magpapabago ng isip mo.”"
+     },
+     "explanation": {
+       "en": "It respects someone's understanding of their own orientation without suggesting it is temporary or needs to be changed.",
+       "fil": "Iginagalang nito ang pagkilala ng isang tao sa sarili niyang oryentasyon nang hindi ipinapalagay na pansamantala lamang ito o kailangang baguhin."
+     }
+   },
+   {
+     "id": "respectful-workplace-023",
+     "kind": "respectful",
+     "target": "men",
+     "category": "workplace",
+     "difficulty": 3,
+     "active": true,
+     "text": {
+       "en": "A manager says: “He can take family leave; the policy applies to every parent.”",
+       "fil": "Sabi ng manager: “Puwede siyang mag-family leave; para ito sa lahat ng magulang.”"
+     },
+     "explanation": {
+       "en": "It supports equal access to family leave rather than assuming caregiving benefits are mainly for women.",
+       "fil": "Sinusuportahan nito ang pantay na karapatan sa family leave sa halip na ipalagay na para lamang ito sa kababaihan."
+     }
+   },
+   {
+     "id": "respectful-school-024",
+     "kind": "respectful",
+     "target": "women",
+     "category": "school",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A classmate says: “Let's put Bea's name first; she came up with the experiment.”",
+       "fil": "Sabi ng kaklase: “Unahin natin ang pangalan ni Bea; siya ang nag-isip ng eksperimento.”"
+     },
+     "explanation": {
+       "en": "It gives a woman appropriate credit for her original contribution instead of overlooking her work.",
+       "fil": "Binibigyan nito ng nararapat na pagkilala ang isang babae sa orihinal niyang ambag sa halip na balewalain ang kaniyang trabaho."
+     }
+   }
+ ]
+}

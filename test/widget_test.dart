@@ -56,8 +56,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('Mag-swipe pakaliwa o pakanan'), findsOneWidget);
-    expect(find.text('PAKALIWA'), findsOneWidget);
+    // The situations load from the bundled JSON, so give the async load a
+    // few frames before asserting on the game UI.
+    for (var i = 0; i < 20 && find.text('ISTERYOTIPO').evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('ISTERYOTIPO'), findsOneWidget);
+    expect(find.text('MAGALANG'), findsOneWidget);
 
     // Open the in-game settings and confirm the muted music carried over.
     await tester.tap(find.byIcon(Icons.settings));

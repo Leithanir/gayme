@@ -23,6 +23,9 @@ class AppSettings extends ChangeNotifier {
 
   bool get isFilipino => _language == filipino;
 
+  /// Language code used by the situation JSON files (`en` / `fil`).
+  String get languageCode => isFilipino ? 'fil' : 'en';
+
   double get musicVolume => _musicVolume;
 
   double get sfxVolume => _sfxVolume;

@@ -1,10 +1,22 @@
 
+import 'dart:async';
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
+
 import 'app_settings.dart';
+import 'content/situation.dart';
+import 'content/situation_repository.dart';
+import 'game/game_session.dart';
+import 'results_screen.dart';
 
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
+  const GameScreen({
+    super.key,
+    this.repository = const SituationRepository(),
+  });
+
+  final SituationRepository repository;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -14,98 +26,193 @@ class _GameScreenState extends State<GameScreen> {
   double _dragOffset = 0;
   double _dragY = 0;
 
-  double _titleOffsetX = 0;
-  double _titleOffsetY = 0;
-
   late AppSettings _settings;
-  String? _lastLanguage;
-  String _swipeMessage = 'Swipe left or right';
+
+  List<Situation> _cards = const [];
+  GameSession? _session;
+  bool _isLoading = true;
+  Object? _loadError;
 
   bool _isDragging = false;
   bool _isAnimatingOut = false;
+  bool _showFeedback = false;
+
+  Timer? _resolveTimer;
 
   bool get _isFilipino => _settings.isFilipino;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCards();
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
     _settings = SettingsScope.of(context);
+  }
 
-    if (_settings.language != _lastLanguage) {
-      _lastLanguage = _settings.language;
-      _swipeMessage = _isFilipino
-          ? 'Mag-swipe pakaliwa o pakanan'
-          : 'Swipe left or right';
+  @override
+  void dispose() {
+    _resolveTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadCards() async {
+    try {
+      final cards = await widget.repository.loadCards();
+
+      if (!mounted) return;
+
+      setState(() {
+        _cards = cards;
+        _session = GameSession(cards: cards);
+        _isLoading = false;
+        _loadError = null;
+        _showFeedback = false;
+        _isAnimatingOut = false;
+        _resetDrag();
+      });
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+        _loadError = error;
+      });
     }
   }
 
-  void _setLanguage(String language) {
-    _settings.language = language;
+  void _retryLoad() {
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+
+    _loadCards();
+  }
+
+  void _startNewRound() {
+    _resolveTimer?.cancel();
+
+    final cards = _cards;
+
+    if (cards.isEmpty) {
+      _retryLoad();
+      return;
+    }
 
     setState(() {
-      _swipeMessage = _isFilipino
-          ? 'Mag-swipe pakaliwa o pakanan'
-          : 'Swipe left or right';
+      _session = GameSession(cards: cards);
+      _showFeedback = false;
+      _isAnimatingOut = false;
+      _resetDrag();
     });
   }
 
+  void _resetDrag() {
+    _dragOffset = 0;
+    _dragY = 0;
+    _isDragging = false;
+  }
+
   void _handleSwipeEnd(DragEndDetails details) {
+    final session = _session;
+
+    if (session == null || session.awaitingNext || _isAnimatingOut) {
+      return;
+    }
+
     final velocity = details.velocity.pixelsPerSecond.dx;
     final shouldSwipe =
         _dragOffset.abs() > 100 || velocity.abs() > 700;
 
-    if (shouldSwipe) {
-      final direction = _dragOffset.abs() > 100
-          ? _dragOffset.sign
-          : velocity.sign;
+    if (!shouldSwipe) {
+      setState(_resetDrag);
+      return;
+    }
 
-      if (direction == 0) return;
+    final direction = _dragOffset.abs() > 100
+        ? _dragOffset.sign
+        : velocity.sign;
 
-      final screenWidth = MediaQuery.of(context).size.width;
+    if (direction == 0) return;
+
+    _commitAnswer(
+      direction < 0 ? SwipeSide.left : SwipeSide.right,
+    );
+  }
+
+  void _commitAnswer(SwipeSide side) {
+    final session = _session;
+
+    if (session == null || session.awaitingNext) return;
+
+    session.answer(side);
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final direction = side == SwipeSide.left ? -1.0 : 1.0;
+
+    setState(() {
+      _isDragging = false;
+      _isAnimatingOut = true;
+      _dragOffset = direction * screenWidth * 1.5;
+      _dragY = 0;
+    });
+
+    _resolveTimer?.cancel();
+    _resolveTimer = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
 
       setState(() {
-        _isDragging = false;
-        _isAnimatingOut = true;
-        _dragOffset = direction * screenWidth * 1.5;
-        _dragY = 0;
-
-        _swipeMessage = direction < 0
-            ? (_isFilipino ? 'Nag-swipe pakaliwa' : 'Swiped left')
-            : (_isFilipino ? 'Nag-swipe pakanan' : 'Swiped right');
-      });
-
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (!mounted) return;
-
-        setState(() {
-          _dragOffset = 0;
-          _dragY = 0;
-          _isAnimatingOut = false;
-        });
-      });
-    } else {
-      setState(() {
-        _isDragging = false;
+        _isAnimatingOut = false;
+        _showFeedback = true;
         _dragOffset = 0;
         _dragY = 0;
-        _swipeMessage = _isFilipino
-            ? 'Mag-swipe nang mas malayo'
-            : 'Swipe farther to choose';
       });
+    });
+  }
+
+  void _nextCard() {
+    final session = _session;
+
+    if (session == null || !session.awaitingNext) return;
+
+    setState(() {
+      session.next();
+      _showFeedback = false;
+      _resetDrag();
+    });
+
+    if (session.isFinished) {
+      _showResults();
+    }
+  }
+
+  Future<void> _showResults() async {
+    final session = _session;
+
+    if (session == null) return;
+
+    final playAgain = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => ResultsScreen(session: session),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (playAgain == true) {
+      _startNewRound();
+    } else if (playAgain == false) {
+      Navigator.of(context).pop();
     }
   }
 
   void _restartGame() {
-    setState(() {
-      _dragOffset = 0;
-      _dragY = 0;
-      _isDragging = false;
-      _isAnimatingOut = false;
-      _swipeMessage = _isFilipino
-          ? 'Mag-swipe pakaliwa o pakanan'
-          : 'Swipe left or right';
-    });
+    _startNewRound();
   }
 
   void _showSettings() {
@@ -230,7 +337,8 @@ class _GameScreenState extends State<GameScreen> {
                                       selected: _settings.language ==
                                           AppSettings.english,
                                       onTap: () {
-                                        _setLanguage(AppSettings.english);
+                                        _settings.language =
+                                            AppSettings.english;
                                       },
                                     ),
                                   ),
@@ -241,7 +349,8 @@ class _GameScreenState extends State<GameScreen> {
                                       selected: _settings.language ==
                                           AppSettings.filipino,
                                       onTap: () {
-                                        _setLanguage(AppSettings.filipino);
+                                        _settings.language =
+                                            AppSettings.filipino;
                                       },
                                     ),
                                   ),
@@ -474,7 +583,7 @@ class _GameScreenState extends State<GameScreen> {
             right: 0,
             top: 0,
             child: Transform.translate(
-              offset: Offset(_titleOffsetX, _titleOffsetY + 35),
+              offset: const Offset(0, 35),
               child: SizedBox(
                 height: 50,
                 width: double.infinity,
@@ -542,8 +651,6 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cardRotation = (_dragOffset / 1000).clamp(-0.25, 0.25);
-
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -563,108 +670,454 @@ class _GameScreenState extends State<GameScreen> {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  _gameHeader(),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: Center(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onPanStart: (_) {
-                          if (_isAnimatingOut) return;
-                          setState(() {
-                            _isDragging = true;
-                          });
-                        },
-                        onPanUpdate: (details) {
-                          if (_isAnimatingOut) return;
-                          setState(() {
-                            _dragOffset += details.delta.dx;
-                            _dragY += details.delta.dy;
-                          });
-                        },
-                        onPanEnd: (details) {
-                          if (_isAnimatingOut) return;
-                          _handleSwipeEnd(details);
-                        },
-                        child: AnimatedContainer(
-                          duration: Duration(
-                            milliseconds: _isDragging ? 0 : 350,
-                          ),
-                          curve: Curves.easeOutCubic,
-                          transformAlignment: Alignment.center,
-                          transform: Matrix4.identity()
-                            ..translate(
-                              _dragOffset.clamp(
-                                -MediaQuery.of(context).size.width * 1.5,
-                                MediaQuery.of(context).size.width * 1.5,
-                              ),
-                              _dragY.clamp(-120.0, 120.0),
-                            )
-                            ..rotateZ(cardRotation),
-                          width: double.infinity,
-                          constraints: const BoxConstraints(
-                            minHeight: 450,
-                            maxHeight: 600,
-                          ),
-                          padding: const EdgeInsets.all(14),
-                          child: CustomPaint(
-                            foregroundPainter: _NeonRainbowBorderPainter(),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.025),
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  _isFilipino
-                                      ? 'Lalabas dito ang sitwasyon'
-                                      : 'Situation will appear here',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _swipeMessage,
-                    style: const TextStyle(
-                      color: Color(0xFFE6B4FF),
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _SwipeHint(
-                        icon: Icons.arrow_back_rounded,
-                        label: _isFilipino ? 'PAKALIWA' : 'SWIPE LEFT',
-                        color: const Color(0xFF00E5FF),
-                      ),
-                      _SwipeHint(
-                        icon: Icons.arrow_forward_rounded,
-                        label: _isFilipino ? 'PAKANAN' : 'SWIPE RIGHT',
-                        color: const Color(0xFFFF4DDB),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+              child: _buildBody(),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) return _buildLoading();
+
+    if (_loadError != null) return _buildLoadError();
+
+    final session = _session;
+
+    if (session == null) return _buildLoading();
+
+    if (session.isFinished && !session.awaitingNext) {
+      return _buildRoundComplete();
+    }
+
+    return Column(
+      children: [
+        _gameHeader(),
+        const SizedBox(height: 10),
+        _progressRow(session),
+        const SizedBox(height: 10),
+        if (!_showFeedback)
+          Text(
+            _isFilipino
+                ? 'I-swipe ang card sa panig na sa tingin mo ay tama.'
+                : 'Swipe the card toward the side it belongs to.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFFE6B4FF),
+              fontSize: 13,
+            ),
+          ),
+        Expanded(
+          child: _showFeedback
+              ? _feedbackPanel(session)
+              : _cardArea(session),
+        ),
+        if (!_showFeedback) ...[
+          const SizedBox(height: 12),
+          _sideHints(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildLoading() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 42,
+            height: 42,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: Color(0xFFC45CFF),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            _isFilipino
+                ? 'Nilo-load ang mga sitwasyon...'
+                : 'Loading situations...',
+            style: const TextStyle(
+              color: Color(0xFFE6B4FF),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadError() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            color: Color(0xFFFF4DDB),
+            size: 48,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            _isFilipino
+                ? 'Hindi ma-load ang mga sitwasyon.'
+                : 'Could not load the situations.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$_loadError',
+            textAlign: TextAlign.center,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 11,
+            ),
+          ),
+          const SizedBox(height: 18),
+          OutlinedButton(
+            onPressed: _retryLoad,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF00E5FF),
+              side: const BorderSide(color: Color(0xFF00E5FF)),
+            ),
+            child: Text(_isFilipino ? 'SUBUKAN MULI' : 'RETRY'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoundComplete() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.emoji_events_rounded,
+            color: Color(0xFFFFD740),
+            size: 52,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            _isFilipino ? 'Tapos na ang round!' : 'Round complete!',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 18),
+          OutlinedButton(
+            onPressed: _showResults,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF00E5FF),
+              side: const BorderSide(color: Color(0xFF00E5FF)),
+            ),
+            child: Text(
+              _isFilipino ? 'TINGNAN ANG RESULTA' : 'SEE RESULTS',
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              _isFilipino ? 'BUMALIK SA MENU' : 'BACK TO MENU',
+              style: const TextStyle(color: Color(0xFFFF4DDB)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _progressRow(GameSession session) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _statPill(
+          'CARD ${session.currentNumber} / ${session.total}',
+          const Color(0xFF00E5FF),
+        ),
+        _statPill(
+          '${_isFilipino ? 'ISKOR' : 'SCORE'} ${session.score}',
+          const Color(0xFFFFD740),
+        ),
+      ],
+    );
+  }
+
+  Widget _statPill(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+
+  Widget _cardArea(GameSession session) {
+    final card = session.current;
+
+    if (card == null) return const SizedBox.shrink();
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardRotation = (_dragOffset / 1000).clamp(-0.25, 0.25);
+    final dx = _dragOffset.clamp(
+      -screenWidth * 1.5,
+      screenWidth * 1.5,
+    );
+    final dy = _dragY.clamp(-120.0, 120.0);
+    final text = card.textFor(_settings.languageCode);
+
+    return Center(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onPanStart: (_) {
+          if (_isAnimatingOut || session.awaitingNext) return;
+
+          setState(() {
+            _isDragging = true;
+          });
+        },
+        onPanUpdate: (details) {
+          if (_isAnimatingOut || session.awaitingNext) return;
+
+          setState(() {
+            _dragOffset += details.delta.dx;
+            _dragY += details.delta.dy;
+          });
+        },
+        onPanEnd: (details) {
+          if (_isAnimatingOut || session.awaitingNext) return;
+
+          _handleSwipeEnd(details);
+        },
+        child: AnimatedContainer(
+          duration: Duration(
+            milliseconds: _isDragging ? 0 : 350,
+          ),
+          curve: Curves.easeOutCubic,
+          transformAlignment: Alignment.center,
+          transform: Matrix4.translationValues(dx, dy, 0)
+            ..rotateZ(cardRotation),
+          width: double.infinity,
+          height: double.infinity,
+          constraints: const BoxConstraints(maxHeight: 600),
+          padding: const EdgeInsets.all(14),
+          child: CustomPaint(
+            foregroundPainter: _NeonRainbowBorderPainter(),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.025),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 22,
+                vertical: 24,
+              ),
+              child: Center(
+                child: Text(
+                  text,
+                  textAlign: TextAlign.center,
+                  maxLines: 12,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: _cardFontSize(text),
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                    shadows: const [
+                      Shadow(
+                        color: Color(0xFFFF00E6),
+                        blurRadius: 12,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  double _cardFontSize(String text) {
+    if (text.length > 120) return 18;
+    if (text.length > 80) return 20;
+    return 23;
+  }
+
+  Widget _feedbackPanel(GameSession session) {
+    final feedback = session.pendingFeedback;
+
+    if (feedback == null) return const SizedBox.shrink();
+
+    final correct = feedback.isCorrect;
+    final color = correct
+        ? const Color(0xFF39FF14)
+        : const Color(0xFFFFD740);
+    final isLast = session.answeredCount >= session.total;
+
+    return SingleChildScrollView(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: color.withValues(alpha: 0.7),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.2),
+              blurRadius: 24,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              correct
+                  ? Icons.check_circle_rounded
+                  : Icons.info_rounded,
+              color: color,
+              size: 46,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _isFilipino
+                  ? (correct ? 'TAMA!' : 'HINDI TAMA.')
+                  : (correct ? 'EXACTLY!' : 'NOT QUITE.'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: color,
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _thisWasLabel(
+                feedback.card.kind,
+                correct: correct,
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFFE6B4FF),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              feedback.card.explanationFor(
+                _settings.languageCode,
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: _nextCard,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: color,
+                  side: BorderSide(
+                    color: color.withValues(alpha: 0.85),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(
+                  isLast
+                      ? (_isFilipino
+                          ? 'TINGNAN ANG RESULTA'
+                          : 'SEE RESULTS')
+                      : (_isFilipino ? 'SUSUNOD' : 'NEXT'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _thisWasLabel(
+    SituationKind kind, {
+    required bool correct,
+  }) {
+    final isStereotype = kind == SituationKind.stereotype;
+
+    if (_isFilipino) {
+      final label = isStereotype ? 'isang isteryotipo' : 'magalang';
+      return correct ? 'Ito ay $label.' : 'Ito pala ay $label.';
+    }
+
+    final label = isStereotype ? 'a stereotype' : 'respectful';
+    return correct ? 'This was $label.' : 'This was actually $label.';
+  }
+
+  Widget _sideHints() {
+    return Row(
+      children: [
+        Expanded(
+          child: _SideHint(
+            icon: Icons.arrow_back_rounded,
+            title: _isFilipino ? 'ISTERYOTIPO' : 'STEREOTYPE',
+            subtitle:
+                _isFilipino ? 'I-swipe pakaliwa' : 'Swipe left',
+            color: const Color(0xFF00E5FF),
+            active: _dragOffset < -20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _SideHint(
+            icon: Icons.arrow_forward_rounded,
+            title: _isFilipino ? 'MAGALANG' : 'RESPECTFUL',
+            subtitle:
+                _isFilipino ? 'I-swipe pakanan' : 'Swipe right',
+            color: const Color(0xFFFF4DDB),
+            active: _dragOffset > 20,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -748,37 +1201,80 @@ class _RainbowStrikeThroughPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _SwipeHint extends StatelessWidget {
+class _SideHint extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final String title;
+  final String subtitle;
   final Color color;
+  final bool active;
 
-  const _SwipeHint({
+  const _SideHint({
     required this.icon,
-    required this.label,
+    required this.title,
+    required this.subtitle,
     required this.color,
+    required this.active,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: color,
-          size: 32,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: active ? 0.22 : 0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: color.withValues(alpha: active ? 0.95 : 0.35),
+          width: active ? 2 : 1,
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
+        boxShadow: active
+            ? [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.35),
+                  blurRadius: 18,
+                ),
+              ]
+            : const [],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
             color: color,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
+            size: 28,
           ),
-        ),
-      ],
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              title,
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              subtitle,
+              style: const TextStyle(
+                color: Colors.white60,
+                fontSize: 10,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
+

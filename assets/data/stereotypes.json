@@ -1,0 +1,390 @@
+{
+   "schemaVersion": 1,
+ "defaultLanguage": "en",
+ "cards": [
+   {
+     "id": "stereotype-workplace-001",
+     "kind": "stereotype",
+     "target": "women",
+     "category": "workplace",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A coworker says: “Women are too emotional to lead a team.”",
+       "fil": "Sabi ng katrabaho: “Masyadong emosyonal ang mga babae para mamuno sa team.”"
+     },
+     "explanation": {
+       "en": "The quote assumes that women's emotions make them unfit to lead. It overlooks individual leadership skills and judgment.",
+       "fil": "Ipinapalagay nito na hadlang sa pamumuno ang emosyon ng mga babae. Hindi nito isinasaalang-alang ang kakayahan ng bawat indibidwal."
+     }
+   },
+   {
+     "id": "stereotype-home-002",
+     "kind": "stereotype",
+     "target": "women",
+     "category": "home",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A relative says: “Taking care of the children is naturally a mother's job.”",
+       "fil": "Sabi ng kamag-anak: “Natural na trabaho ng nanay ang pag-aalaga sa mga anak.”"
+     },
+     "explanation": {
+       "en": "The quote assumes that childcare is primarily a woman's responsibility. It overlooks fathers and other caregivers who can share parenting equally.",
+       "fil": "Ipinapalagay nito na responsibilidad ng babae ang pag-aalaga ng anak. Hindi nito kinikilala na parehong maaaring gampanan ito ng mga magulang."
+     }
+   },
+   {
+     "id": "stereotype-school-003",
+     "kind": "stereotype",
+     "target": "women",
+     "category": "school",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A classmate says: “Girls are naturally worse at math than boys.”",
+       "fil": "Sabi ng kaklase: “Mas mahina talaga sa math ang mga babae kaysa sa mga lalaki.”"
+     },
+     "explanation": {
+       "en": "The quote assumes mathematical ability is determined by gender. It ignores individual aptitude, practice, and learning opportunities.",
+       "fil": "Ipinapalagay nito na nakadepende sa kasarian ang galing sa math. Hindi nito isinasaalang-alang ang pagsasanay at kakayahan ng bawat estudyante."
+     }
+   },
+   {
+     "id": "stereotype-media-004",
+     "kind": "stereotype",
+     "target": "women",
+     "category": "media",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "An online commenter says: “A woman's worth depends on how pretty she looks.”",
+       "fil": "Sabi ng online commenter: “Nasusukat ang halaga ng babae sa ganda ng hitsura niya.”"
+     },
+     "explanation": {
+       "en": "The quote reduces women's value to physical appearance. It overlooks their character, abilities, and contributions.",
+       "fil": "Itinatakda nito ang halaga ng babae batay lamang sa hitsura. Hindi nito kinikilala ang kanyang pagkatao, kakayahan, at ambag."
+     }
+   },
+   {
+     "id": "stereotype-public-005",
+     "kind": "stereotype",
+     "target": "women",
+     "category": "public",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A neighbor says: “Women should not travel alone because they cannot take care of themselves.”",
+       "fil": "Sabi ng kapitbahay: “Hindi dapat maglakbay nang mag-isa ang babae dahil hindi niya kayang alagaan ang sarili niya.”"
+     },
+     "explanation": {
+       "en": "The quote assumes women are inherently incapable of independent travel. It confuses gender with personal ability and judgment.",
+       "fil": "Ipinapalagay nito na walang kakayahan ang babae na bumiyahe nang mag-isa. Hindi nakabatay sa kasarian ang kakayahang maging independent."
+     }
+   },
+   {
+     "id": "stereotype-workplace-006",
+     "kind": "stereotype",
+     "target": "men",
+     "category": "workplace",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A boss says: “Men should handle the heavy work because they are naturally stronger.”",
+       "fil": "Sabi ng boss: “Mga lalaki ang dapat gumawa ng mabibigat na trabaho dahil mas malakas talaga sila.”"
+     },
+     "explanation": {
+       "en": "The quote assumes all men are stronger and more suited to physical work. It overlooks individual differences in strength and ability.",
+       "fil": "Ipinapalagay nito na lahat ng lalaki ay mas malakas at mas angkop sa mabibigat na trabaho. Magkakaiba ang lakas at kakayahan ng bawat tao."
+     }
+   },
+   {
+     "id": "stereotype-home-007",
+     "kind": "stereotype",
+     "target": "men",
+     "category": "home",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A father says: “Boys don't cry; they need to be strong.”",
+       "fil": "Sabi ng tatay: “Hindi umiiyak ang mga lalaki; kailangan nilang magpakatatag.”"
+     },
+     "explanation": {
+       "en": "The quote assumes men should hide sadness and other emotions. It limits their ability to express feelings and seek emotional support.",
+       "fil": "Ipinapalagay nito na dapat itago ng mga lalaki ang kanilang lungkot at emosyon. Nililimitahan nito ang kanilang kalayaang magpahayag ng nararamdaman."
+     }
+   },
+   {
+     "id": "stereotype-school-008",
+     "kind": "stereotype",
+     "target": "men",
+     "category": "school",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A coach says: “Real boys should always be good at sports.”",
+       "fil": "Sabi ng coach: “Dapat magaling sa sports ang mga tunay na lalaki.”"
+     },
+     "explanation": {
+       "en": "The quote connects masculinity with athletic ability. It overlooks boys who have different interests, strengths, and talents.",
+       "fil": "Iniuugnay nito ang pagiging tunay na lalaki sa galing sa sports. Hindi nito kinikilala na magkakaiba ang interes at talento ng mga lalaki."
+     }
+   },
+   {
+     "id": "stereotype-media-009",
+     "kind": "stereotype",
+     "target": "lgbtqia+",
+     "category": "media",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "An online commenter says: “Being gay is just a phase people grow out of.”",
+       "fil": "Sabi ng online commenter: “Yugto lang ang pagiging gay na lilipas din habang tumatanda.”"
+     },
+     "explanation": {
+       "en": "The quote assumes that being gay is temporary rather than a valid sexual orientation. It dismisses people's understanding of their own identity.",
+       "fil": "Ipinapalagay nito na pansamantala lamang ang pagiging gay. Binabalewala nito ang pagkakakilanlan at sariling pag-unawa ng isang tao sa kanyang seksuwalidad."
+     }
+   },
+   {
+     "id": "stereotype-public-010",
+     "kind": "stereotype",
+     "target": "lgbtqia+",
+     "category": "public",
+     "difficulty": 1,
+     "active": true,
+     "text": {
+       "en": "A stranger says: “You can always tell someone's gender by how they look.”",
+       "fil": "Sabi ng estranghero: “Malalaman mo agad ang kasarian ng isang tao base sa hitsura niya.”"
+     },
+     "explanation": {
+       "en": "The quote assumes appearance always reveals someone's gender identity. It overlooks the diversity of gender expression and identity.",
+       "fil": "Ipinapalagay nito na laging makikita sa hitsura ang pagkakakilanlan sa kasarian. Magkakaiba ang paraan ng pagpapahayag at pagkilala ng mga tao sa kanilang sarili."
+     }
+   },
+   {
+     "id": "stereotype-workplace-011",
+     "kind": "stereotype",
+     "target": "women",
+     "category": "workplace",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A manager says: “She is capable, but clients might respond better to a male representative.”",
+       "fil": "Sabi ng manager: “Magaling naman siya, pero baka mas tanggapin ng mga kliyente ang lalaking representative.”"
+     },
+     "explanation": {
+       "en": "The quote assumes men are more credible representatives simply because of their gender. It can limit women's access to visible and influential roles.",
+       "fil": "Ipinapalagay nito na mas kapani-paniwala ang mga lalaki bilang kinatawan dahil lamang sa kanilang kasarian. Maaari nitong hadlangan ang pagkakataon ng kababaihan sa mahahalagang posisyon."
+     }
+   },
+   {
+     "id": "stereotype-home-012",
+     "kind": "stereotype",
+     "target": "women",
+     "category": "home",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A relative says: “She works full-time, but she should still manage most of the housework.”",
+       "fil": "Sabi ng kamag-anak: “Full-time naman ang trabaho niya, pero dapat siya pa rin ang gumawa ng karamihan sa gawaing bahay.”"
+     },
+     "explanation": {
+       "en": "The quote assumes household responsibilities naturally belong more to women, even when both partners work. It creates an unequal division of domestic labor.",
+       "fil": "Ipinapalagay nito na mas tungkulin ng babae ang gawaing bahay kahit pareho silang nagtatrabaho. Nagdudulot ito ng hindi pantay na paghahati ng responsibilidad."
+     }
+   },
+   {
+     "id": "stereotype-school-013",
+     "kind": "stereotype",
+     "target": "women",
+     "category": "school",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A teacher says: “Girls are better suited for organizing class activities than leading them.”",
+       "fil": "Sabi ng guro: “Mas bagay sa mga babae ang mag-ayos ng class activities kaysa mamuno sa mga ito.”"
+     },
+     "explanation": {
+       "en": "The quote assumes girls are more suited to supporting roles than leadership positions. It can discourage them from developing and demonstrating leadership skills.",
+       "fil": "Ipinapalagay nito na mas angkop ang mga babae sa mga pantulong na gawain kaysa sa pamumuno. Maaari nitong pigilan silang ipakita at paunlarin ang kanilang kakayahan."
+     }
+   },
+   {
+     "id": "stereotype-media-014",
+     "kind": "stereotype",
+     "target": "women",
+     "category": "media",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A viewer says: “Female athletes need to look attractive to get noticed.”",
+       "fil": "Sabi ng manonood: “Kailangan maging maganda ang mga babaeng atleta para mapansin sila.”"
+     },
+     "explanation": {
+       "en": "The quote assumes women's visibility in sports depends on attractiveness rather than performance. It shifts attention away from their athletic achievements.",
+       "fil": "Ipinapalagay nito na nakadepende sa ganda ng hitsura ang pagkilala sa mga babaeng atleta. Naililihis nito ang pansin mula sa kanilang husay at tagumpay."
+     }
+   },
+   {
+     "id": "stereotype-public-015",
+     "kind": "stereotype",
+     "target": "women",
+     "category": "public",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A neighbor says: “A woman without children will probably regret her choices later.”",
+       "fil": "Sabi ng kapitbahay: “Magsisisi rin siguro ang babaeng walang anak sa mga desisyon niya balang-araw.”"
+     },
+     "explanation": {
+       "en": "The quote assumes motherhood is necessary for women's fulfillment. It overlooks different personal goals and valid life choices.",
+       "fil": "Ipinapalagay nito na kailangan maging ina para maging ganap ang isang babae. Hindi nito kinikilala ang iba't ibang pangarap at personal na desisyon sa buhay."
+     }
+   },
+   {
+     "id": "stereotype-home-016",
+     "kind": "stereotype",
+     "target": "men",
+     "category": "home",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A relative says: “Fathers can help with the children, but mothers are naturally better caregivers.”",
+       "fil": "Sabi ng kamag-anak: “Puwedeng tumulong ang tatay, pero mas natural na mahusay mag-alaga ang nanay.”"
+     },
+     "explanation": {
+       "en": "The quote assumes caregiving comes more naturally to women than men. It minimizes fathers' ability to take equal responsibility for raising children.",
+       "fil": "Ipinapalagay nito na mas likas sa babae ang pag-aalaga kaysa sa lalaki. Minamaliit nito ang kakayahan ng mga tatay na maging pantay na katuwang sa pagpapalaki ng anak."
+     }
+   },
+   {
+     "id": "stereotype-workplace-017",
+     "kind": "stereotype",
+     "target": "lgbtqia+",
+     "category": "workplace",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A supervisor says: “Let's not assign them to conservative clients; their identity might be distracting.”",
+       "fil": "Sabi ng supervisor: “Huwag muna silang i-assign sa konserbatibong kliyente; baka maging sagabal ang identity nila.”"
+     },
+     "explanation": {
+       "en": "The quote assumes an LGBTQIA+ person's identity makes them unsuitable for certain professional interactions. It unfairly treats identity as a workplace liability.",
+       "fil": "Ipinapalagay nito na hadlang sa propesyonal na pakikitungo ang LGBTQIA+ identity. Hindi patas na ituring ang pagkakakilanlan bilang kahinaan sa trabaho."
+     }
+   },
+   {
+     "id": "stereotype-school-018",
+     "kind": "stereotype",
+     "target": "lgbtqia+",
+     "category": "school",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A classmate says: “You can't be bisexual if you're dating someone of only one gender.”",
+       "fil": "Sabi ng kaklase: “Hindi ka bisexual kung isa lang ang kasarian ng taong dine-date mo.”"
+     },
+     "explanation": {
+       "en": "The quote assumes bisexuality depends on a person's current partner. It overlooks that sexual orientation is not determined by relationship status.",
+       "fil": "Ipinapalagay nito na nakadepende sa kasalukuyang karelasyon ang pagiging bisexual. Hindi nababago ang seksuwal na oryentasyon batay lamang sa kung sino ang dini-date ng isang tao."
+     }
+   },
+   {
+     "id": "stereotype-media-019",
+     "kind": "stereotype",
+     "target": "men",
+     "category": "media",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A film reviewer says: “Male characters who show vulnerability don't make convincing heroes.”",
+       "fil": "Sabi ng film reviewer: “Hindi kapani-paniwalang bayani ang mga lalaking karakter na nagpapakita ng kahinaan.”"
+     },
+     "explanation": {
+       "en": "The quote assumes male heroes must always appear emotionally strong. It limits the portrayal of men as complex people who can experience vulnerability.",
+       "fil": "Ipinapalagay nito na dapat laging matatag ang emosyon ng mga lalaking bayani. Nililimitahan nito ang pagpapakita sa mga lalaki bilang mga taong may iba't ibang damdamin."
+     }
+   },
+   {
+     "id": "stereotype-public-020",
+     "kind": "stereotype",
+     "target": "men",
+     "category": "public",
+     "difficulty": 2,
+     "active": true,
+     "text": {
+       "en": "A friend says: “A man who stays home with the kids must not be ambitious.”",
+       "fil": "Sabi ng kaibigan: “Siguradong walang pangarap sa buhay ang lalaking nag-aalaga lang ng mga anak sa bahay.”"
+     },
+     "explanation": {
+       "en": "The quote assumes men's ambitions must involve paid employment or traditional careers. It overlooks caregiving as a meaningful responsibility and personal choice.",
+       "fil": "Ipinapalagay nito na dapat may bayad na trabaho o tradisyonal na karera ang ambisyosong lalaki. Hindi nito kinikilala ang halaga ng pag-aalaga sa pamilya."
+     }
+   },
+   {
+     "id": "stereotype-home-021",
+     "kind": "stereotype",
+     "target": "lgbtqia+",
+     "category": "home",
+     "difficulty": 3,
+     "active": true,
+     "text": {
+       "en": "A relative says: “We accept you, but don't expect us to explain your identity to the younger children.”",
+       "fil": "Sabi ng kamag-anak: “Tanggap ka namin, pero huwag mong asahang ipapaliwanag namin sa mga bata ang identity mo.”"
+     },
+     "explanation": {
+       "en": "The quote assumes an LGBTQIA+ identity is inappropriate or too difficult for children to understand. It treats ordinary identity differences as something that should be hidden.",
+       "fil": "Ipinapalagay nito na hindi angkop o mahirap unawain ng mga bata ang LGBTQIA+ identity. Itinuturing nitong dapat itago ang pagkakaiba sa pagkakakilanlan."
+     }
+   },
+   {
+     "id": "stereotype-school-022",
+     "kind": "stereotype",
+     "target": "men",
+     "category": "school",
+     "difficulty": 3,
+     "active": true,
+     "text": {
+       "en": "A teacher says: “He's unusually good at listening for a boy his age.”",
+       "fil": "Sabi ng guro: “Kakaiba na ang galing niyang makinig para sa isang batang lalaki na kaedad niya.”"
+     },
+     "explanation": {
+       "en": "The quote implies that boys are generally poor listeners and that attentiveness is unusual for them. It turns a positive skill into a gender-based expectation.",
+       "fil": "Ipinahihiwatig nito na karaniwang hindi mahusay makinig ang mga lalaki. Ginagawa nitong pambihira ang isang kakayahang hindi naman nakabatay sa kasarian."
+     }
+   },
+   {
+     "id": "stereotype-media-023",
+     "kind": "stereotype",
+     "target": "lgbtqia+",
+     "category": "media",
+     "difficulty": 3,
+     "active": true,
+     "text": {
+       "en": "An online commenter says: “Their character is fine, but their sexuality doesn't need to be part of the story.”",
+       "fil": "Sabi ng online commenter: “Okay naman ang karakter, pero hindi na kailangang isama sa kuwento ang seksuwalidad niya.”"
+     },
+     "explanation": {
+       "en": "The quote assumes LGBTQIA+ identities are unnecessary details in storytelling while heterosexual identities can remain unquestioned. It can make LGBTQIA+ experiences less visible in media.",
+       "fil": "Ipinapalagay nito na hindi mahalagang bahagi ng kuwento ang LGBTQIA+ identity, samantalang karaniwang tinatanggap ang heterosexual identity. Maaari nitong bawasan ang representasyon ng LGBTQIA+ sa media."
+     }
+   },
+   {
+     "id": "stereotype-public-024",
+     "kind": "stereotype",
+     "target": "lgbtqia+",
+     "category": "public",
+     "difficulty": 3,
+     "active": true,
+     "text": {
+       "en": "A neighbor says: “They seem nice, but I wouldn't assume a same-sex couple can raise children normally.”",
+       "fil": "Sabi ng kapitbahay: “Mabait naman sila, pero hindi ko ipagpapalagay na kayang magpalaki ng anak nang normal ang magkaparehong kasarian.”"
+     },
+     "explanation": {
+       "en": "The quote assumes that children need parents of different genders to have a healthy upbringing. It overlooks the importance of care, stability, and support in parenting.",
+       "fil": "Ipinapalagay nito na kailangan ng mga anak ang magulang na magkaiba ang kasarian para lumaking maayos. Hindi nito isinasaalang-alang ang halaga ng pagmamahal, katatagan, at suporta sa pagpapalaki ng anak."
+     }
+   }
+ ]
+}
