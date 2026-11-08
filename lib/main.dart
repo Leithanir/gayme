@@ -1,10 +1,19 @@
-
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:video_player/video_player.dart';
+
 import 'app_settings.dart';
 import 'game_screen.dart';
 import 'achievement_screen.dart';
+
+const List<Shadow> comicShadows = [
+  Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(-2, -2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(2, -2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(-2, 2), blurRadius: 0),
+];
 
 void main() {
   runApp(const StereotypicalApp());
@@ -46,12 +55,137 @@ class _StereotypicalAppState extends State<StereotypicalApp> {
           brightness: Brightness.dark,
           useMaterial3: true,
           fontFamily: 'Arial',
+          textTheme: const TextTheme(
+            bodyLarge: TextStyle(color: Colors.white, shadows: comicShadows),
+            bodyMedium: TextStyle(color: Colors.white, shadows: comicShadows),
+            bodySmall: TextStyle(color: Colors.white, shadows: comicShadows),
+            titleLarge: TextStyle(color: Colors.white, shadows: comicShadows),
+            titleMedium: TextStyle(color: Colors.white, shadows: comicShadows),
+            titleSmall: TextStyle(color: Colors.white, shadows: comicShadows),
+            labelLarge: TextStyle(color: Colors.white, shadows: comicShadows),
+            labelMedium: TextStyle(color: Colors.white, shadows: comicShadows),
+            labelSmall: TextStyle(color: Colors.white, shadows: comicShadows),
+            headlineLarge: TextStyle(color: Colors.white, shadows: comicShadows),
+            headlineMedium: TextStyle(color: Colors.white, shadows: comicShadows),
+            headlineSmall: TextStyle(color: Colors.white, shadows: comicShadows),
+          ),
         ),
-        home: const MainMenu(),
+        home: const VideoSplashScreen(),
       ),
     );
   }
 }
+
+// ============================================================
+// VIDEO SPLASH SCREEN
+// ============================================================
+
+class VideoSplashScreen extends StatefulWidget {
+  const VideoSplashScreen({super.key});
+
+  @override
+  State<VideoSplashScreen> createState() => _VideoSplashScreenState();
+}
+
+class _VideoSplashScreenState extends State<VideoSplashScreen> {
+  late VideoPlayerController _videoController;
+
+  bool _finished = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _videoController = VideoPlayerController.asset(
+      'assets/videos/Intro.mp4',
+    );
+
+    _initializeVideo();
+  }
+
+  Future<void> _initializeVideo() async {
+    try {
+      await _videoController.initialize();
+
+      await _videoController.setLooping(false);
+
+      await _videoController.play();
+
+      _videoController.addListener(_videoListener);
+
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      debugPrint('Intro.mp4 failed to load: $e');
+
+      _goToMainMenu();
+    }
+  }
+
+  void _videoListener() {
+    if (!_videoController.value.isInitialized) {
+      return;
+    }
+
+    final position = _videoController.value.position;
+    final duration = _videoController.value.duration;
+
+    if (duration > Duration.zero &&
+        position >= duration &&
+        !_finished) {
+      _finished = true;
+      _goToMainMenu();
+    }
+  }
+
+  void _goToMainMenu() {
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => const MainMenu(),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _videoController.removeListener(_videoListener);
+    _videoController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _goToMainMenu,
+        child: SizedBox.expand(
+          child: _videoController.value.isInitialized
+              ? FittedBox(
+                  // INTRO STAYS CONTAIN
+                  fit: BoxFit.contain,
+                  child: SizedBox(
+                    width: _videoController.value.size.width,
+                    height: _videoController.value.size.height,
+                    child: VideoPlayer(_videoController),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// MAIN MENU
+// ============================================================
 
 class MainMenu extends StatefulWidget {
   const MainMenu({super.key});
@@ -63,6 +197,8 @@ class MainMenu extends StatefulWidget {
 class _MainMenuState extends State<MainMenu>
     with SingleTickerProviderStateMixin {
   late final AnimationController _rainbowController;
+
+  late final VideoPlayerController _menuVideoController;
 
   late AppSettings _settings;
 
@@ -76,50 +212,99 @@ class _MainMenuState extends State<MainMenu>
       vsync: this,
       duration: const Duration(seconds: 5),
     )..repeat();
+
+    _menuVideoController = VideoPlayerController.asset(
+      'assets/videos/MainMenu.mp4',
+    );
+
+    _initializeMenuVideo();
   }
+
+  Future<void> _initializeMenuVideo() async {
+    try {
+      await _menuVideoController.initialize();
+
+      await _menuVideoController.setLooping(true);
+
+      await _menuVideoController.play();
+
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      debugPrint('MainMenu.mp4 failed to load: $e');
+    }
+  }
+
+  Animation<double>? _routeAnimation;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
     _settings = SettingsScope.of(context);
+
+    final animation = ModalRoute.of(context)?.animation;
+    if (_routeAnimation != animation) {
+      _routeAnimation?.removeStatusListener(_animationStatusListener);
+      _routeAnimation = animation;
+      _routeAnimation?.addStatusListener(_animationStatusListener);
+    }
+
+    if (ModalRoute.of(context)?.isCurrent == true && _menuVideoController.value.isInitialized) {
+      _menuVideoController.play();
+      _menuVideoController.setLooping(true);
+    }
+  }
+
+  void _animationStatusListener(AnimationStatus status) {
+    if (status == AnimationStatus.completed) {
+      if (ModalRoute.of(context)?.isCurrent == true) {
+        if (_menuVideoController.value.isInitialized) {
+          _menuVideoController.play();
+          _menuVideoController.setLooping(true);
+        }
+      }
+    }
   }
 
   @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_animationStatusListener);
     _rainbowController.dispose();
+    _menuVideoController.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            'assets/rainbow.gif',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF170C63),
-                      Color(0xFF4921A8),
-                      Color(0xFF087EC2),
-                      Color(0xFF771D9C),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          Container(
-            color: Colors.black.withValues(alpha: 0.15),
-          ),
+          // ==================================================
+          // MAIN MENU VIDEO
+          // NO FALLBACK
+          // NO GRADIENT
+          // NO BLACK OVERLAY
+          // ==================================================
+
+          if (_menuVideoController.value.isInitialized)
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: _menuVideoController.value.size.width,
+                height: _menuVideoController.value.size.height,
+                child: VideoPlayer(_menuVideoController),
+              ),
+            ),
+
+          // ==================================================
+          // MENU CONTENT
+          // ==================================================
+
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -128,13 +313,98 @@ class _MainMenuState extends State<MainMenu>
 
                 final logoSize =
                 (width * 0.70).clamp(210.0, 320.0);
-                final iconSize = width < 380 ? 58.0 : 66.0;
+
+                final iconSize =
+                width < 380 ? 58.0 : 66.0;
 
                 return Stack(
                   alignment: Alignment.center,
                   children: [
+                    // ==================================================
+                    // TOP-LEFT ACHIEVEMENT PROGRESS BADGE
+                    // ==================================================
                     Positioned(
-                      top: height * 0.09,
+                      top: 10,
+                      left: 12,
+                      child: GestureDetector(
+                        onTap: showAchievements,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF111126)
+                                .withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: const Color(0xFFFFF500),
+                              width: 2,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black,
+                                offset: Offset(3, 4),
+                                blurRadius: 0,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.emoji_events_rounded,
+                                color: Color(0xFFFFF500),
+                                size: 22,
+                              ),
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${AppSettings.allAchievements.where((a) => _settings.isUnlocked(a.id)).length} / ${AppSettings.allAchievements.length}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  SizedBox(
+                                    width: 60,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: LinearProgressIndicator(
+                                        value: AppSettings.allAchievements
+                                            .where((a) => _settings.isUnlocked(a.id))
+                                            .length /
+                                            AppSettings.allAchievements.length,
+                                        minHeight: 5,
+                                        backgroundColor:
+                                        Colors.white.withValues(alpha: 0.15),
+                                        valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                          Color(0xFF39FF14),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // ==================================================
+                    // LOGO
+                    // ==================================================
+
+                    Positioned(
+                      top: height * 0.07,
                       left: 0,
                       right: 0,
                       child: Center(
@@ -146,8 +416,13 @@ class _MainMenuState extends State<MainMenu>
                         ),
                       ),
                     ),
+
+                    // ==================================================
+                    // SETTINGS
+                    // ==================================================
+
                     Positioned(
-                      top: height * 0.45,
+                      top: height * 0.43,
                       left: 0,
                       right: 0,
                       child: Center(
@@ -159,86 +434,86 @@ class _MainMenuState extends State<MainMenu>
                         ),
                       ),
                     ),
+
+                    // ==================================================
+                    // HOW TO PLAY
+                    // ==================================================
+
                     Positioned(
                       top: height * 0.51,
                       left: width * 0.20,
                       child: NeonIcon(
                         icon: Icons.help_outline_rounded,
-                        color: const Color(0xFF00E5FF),
+                        color: const Color(0xFF00B8D4),
                         onTap: showHowToPlay,
                         size: iconSize,
                       ),
                     ),
+
+                    // ==================================================
+                    // ACHIEVEMENTS
+                    // ==================================================
+
                     Positioned(
                       top: height * 0.51,
                       right: width * 0.20,
                       child: NeonIcon(
                         icon: Icons.emoji_events_rounded,
-                        color: const Color(0xFFFFD740),
+                        color: const Color(0xFFFFB300),
                         onTap: showAchievements,
                         size: iconSize,
                       ),
                     ),
+
+                    // ==================================================
+                    // CREDITS
+                    // ==================================================
+
                     Positioned(
                       top: height * 0.60,
                       left: width * 0.08,
                       child: NeonIcon(
                         icon: Icons.people_alt_rounded,
-                        color: const Color(0xFFFF4DDB),
+                        color: const Color(0xFFE83E8C),
                         onTap: showCredits,
                         size: iconSize,
                       ),
                     ),
+
+                    // ==================================================
+                    // EXIT
+                    // ==================================================
+
                     Positioned(
                       top: height * 0.60,
                       right: width * 0.08,
                       child: NeonIcon(
                         icon: Icons.exit_to_app_rounded,
-                        color: const Color(0xFFFF5252),
+                        color: const Color(0xFFE53935),
                         onTap: confirmExit,
                         size: iconSize,
                       ),
                     ),
+
+                    // ==================================================
+                    // PLAY BUTTON
+                    // ==================================================
+
                     Positioned(
-                      top: height * 0.70,
-                      left: width * 0.16,
-                      right: width * 0.16,
-                      child: AnimatedBuilder(
-                        animation: _rainbowController,
-                        builder: (context, child) {
-                          return Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              borderRadius:
-                              BorderRadius.circular(100),
-                              gradient: SweepGradient(
-                                transform: GradientRotation(
-                                  _rainbowController.value *
-                                      6.28318,
-                                ),
-                                colors: rainbowColors,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: rainbowColors[
-                                  (_rainbowController.value * 5)
-                                      .floor() %
-                                      5
-                                  ].withValues(alpha: 0.65),
-                                  blurRadius: 22,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                            child: child,
-                          );
-                        },
-                        child: _MenuButton(
-                          icon: Icons.play_arrow_rounded,
-                          label: isFilipino
-                              ? 'SIMULAN ANG LARO'
-                              : 'START GAME',
-                          onTap: startGame,
+                      top: height * 0.56,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: AnimatedBuilder(
+                          animation: _rainbowController,
+                          builder: (context, child) {
+                            return ComicPlayButton(
+                              size: iconSize * 1.35,
+                              rotation:
+                              _rainbowController.value * 6.28318,
+                              onTap: startGame,
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -252,6 +527,10 @@ class _MainMenuState extends State<MainMenu>
     );
   }
 
+  // ============================================================
+  // START GAME
+  // ============================================================
+
   void startGame() {
     Navigator.push(
       context,
@@ -260,6 +539,10 @@ class _MainMenuState extends State<MainMenu>
       ),
     );
   }
+
+  // ============================================================
+  // ACHIEVEMENTS
+  // ============================================================
 
   void showAchievements() {
     Navigator.push(
@@ -270,15 +553,25 @@ class _MainMenuState extends State<MainMenu>
     );
   }
 
+  // ============================================================
+  // EXIT
+  // ============================================================
+
   void confirmExit() {
     showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Exit',
       barrierColor: Colors.black.withValues(alpha: 0.25),
-      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+      pageBuilder: (
+          dialogContext,
+          animation,
+          secondaryAnimation,
+          ) {
         return _GlassDialog(
-          title: isFilipino ? 'LUMABAS SA LARO?' : 'EXIT GAME?',
+          title: isFilipino
+              ? 'LUMABAS SA LARO?'
+              : 'EXIT GAME?',
           children: [
             Text(
               isFilipino
@@ -288,6 +581,7 @@ class _MainMenuState extends State<MainMenu>
               style: const TextStyle(
                 color: Colors.white,
                 height: 1.5,
+                shadows: comicShadows,
               ),
             ),
             const SizedBox(height: 20),
@@ -295,16 +589,19 @@ class _MainMenuState extends State<MainMenu>
               children: [
                 Expanded(
                   child: _DialogButton(
-                    label: isFilipino ? 'KANSELAHIN' : 'CANCEL',
-                    color: const Color(0xFF00E5FF),
-                    onTap: () => Navigator.pop(dialogContext),
+                    label:
+                    isFilipino ? 'KANSELAHIN' : 'CANCEL',
+                    color: const Color(0xFF00A6C7),
+                    onTap: () =>
+                        Navigator.pop(dialogContext),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _DialogButton(
-                    label: isFilipino ? 'LUMABAS' : 'EXIT',
-                    color: const Color(0xFFFF4DDB),
+                    label:
+                    isFilipino ? 'LUMABAS' : 'EXIT',
+                    color: const Color(0xFFE53935),
                     onTap: () {
                       Navigator.pop(dialogContext);
                       SystemNavigator.pop();
@@ -316,11 +613,19 @@ class _MainMenuState extends State<MainMenu>
           ],
         );
       },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
+      transitionBuilder: (
+          context,
+          animation,
+          secondaryAnimation,
+          child,
+          ) {
         return FadeTransition(
           opacity: animation,
           child: ScaleTransition(
-            scale: Tween<double>(begin: 0.92, end: 1).animate(
+            scale: Tween<double>(
+              begin: 0.92,
+              end: 1,
+            ).animate(
               CurvedAnimation(
                 parent: animation,
                 curve: Curves.easeOutCubic,
@@ -333,14 +638,23 @@ class _MainMenuState extends State<MainMenu>
     );
   }
 
+  // ============================================================
+  // SETTINGS
+  // ============================================================
+
   void showSettings() {
     showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Settings',
       barrierColor: Colors.black.withValues(alpha: 0.25),
-      transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+      transitionDuration:
+      const Duration(milliseconds: 250),
+      pageBuilder: (
+          dialogContext,
+          animation,
+          secondaryAnimation,
+          ) {
         return Center(
           child: Material(
             color: Colors.transparent,
@@ -350,7 +664,8 @@ class _MainMenuState extends State<MainMenu>
                 return Padding(
                   padding: const EdgeInsets.all(20),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius:
+                    BorderRadius.circular(28),
                     child: BackdropFilter(
                       filter: ImageFilter.blur(
                         sigmaX: 20,
@@ -360,13 +675,16 @@ class _MainMenuState extends State<MainMenu>
                         width: 420,
                         constraints: BoxConstraints(
                           maxHeight:
-                          MediaQuery.of(context).size.height *
+                          MediaQuery.of(context)
+                              .size
+                              .height *
                               0.85,
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF111126)
                               .withValues(alpha: 0.20),
-                          borderRadius: BorderRadius.circular(28),
+                          borderRadius:
+                          BorderRadius.circular(28),
                           border: Border.all(
                             color: Colors.white
                                 .withValues(alpha: 0.28),
@@ -381,15 +699,18 @@ class _MainMenuState extends State<MainMenu>
                           ],
                         ),
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(24),
+                          padding:
+                          const EdgeInsets.all(24),
                           child: Column(
-                            mainAxisSize: MainAxisSize.min,
+                            mainAxisSize:
+                            MainAxisSize.min,
                             children: [
                               Row(
                                 children: [
                                   const Icon(
                                     Icons.settings,
-                                    color: Color(0xFFC45CFF),
+                                    color:
+                                    Color(0xFFC45CFF),
                                     size: 26,
                                   ),
                                   const SizedBox(width: 12),
@@ -398,17 +719,20 @@ class _MainMenuState extends State<MainMenu>
                                       isFilipino
                                           ? 'MGA SETTING'
                                           : 'SETTINGS',
-                                      style: const TextStyle(
+                                      style:
+                                      const TextStyle(
                                         color: Colors.white,
                                         fontSize: 20,
-                                        fontWeight: FontWeight.bold,
+                                        fontWeight:
+                                        FontWeight.bold,
                                         letterSpacing: 2,
                                       ),
                                     ),
                                   ),
                                   IconButton(
                                     onPressed: () =>
-                                        Navigator.pop(dialogContext),
+                                        Navigator.pop(
+                                            dialogContext),
                                     icon: const Icon(
                                       Icons.close,
                                       color: Colors.white,
@@ -416,79 +740,120 @@ class _MainMenuState extends State<MainMenu>
                                   ),
                                 ],
                               ),
+
                               const SizedBox(height: 16),
+
                               _settingsSection('AUDIO'),
+
                               const SizedBox(height: 16),
+
                               _SettingsVolumeControl(
-                                icon: _settings.musicVolume == 0
+                                icon:
+                                _settings.musicVolume ==
+                                    0
                                     ? Icons.music_off
                                     : Icons.music_note,
-                                title:
-                                isFilipino ? 'Musika' : 'Music',
-                                value: _settings.musicVolume,
+                                title: isFilipino
+                                    ? 'Musika'
+                                    : 'Music',
+                                value:
+                                _settings.musicVolume,
                                 onChanged: (value) {
-                                  _settings.musicVolume = value;
+                                  _settings.musicVolume =
+                                      value;
                                 },
-                                onIconTap: _settings.toggleMusic,
+                                onIconTap:
+                                _settings.toggleMusic,
                               ),
+
                               const SizedBox(height: 12),
+
                               _SettingsVolumeControl(
-                                icon: _settings.sfxVolume == 0
+                                icon:
+                                _settings.sfxVolume == 0
                                     ? Icons.volume_off
                                     : Icons.volume_up,
                                 title: isFilipino
                                     ? 'Epekto ng Tunog'
                                     : 'Sound Effects',
-                                value: _settings.sfxVolume,
+                                value:
+                                _settings.sfxVolume,
                                 onChanged: (value) {
-                                  _settings.sfxVolume = value;
+                                  _settings.sfxVolume =
+                                      value;
                                 },
-                                onIconTap: _settings.toggleSfx,
+                                onIconTap:
+                                _settings.toggleSfx,
                               ),
+
                               const SizedBox(height: 24),
+
                               _settingsSection(
-                                isFilipino ? 'WIKA' : 'LANGUAGE',
+                                isFilipino
+                                    ? 'WIKA'
+                                    : 'LANGUAGE',
                               ),
+
                               const SizedBox(height: 12),
+
                               Row(
                                 children: [
                                   Expanded(
-                                    child: _SettingsLanguageButton(
+                                    child:
+                                    _SettingsLanguageButton(
                                       label: 'English',
-                                      selected: _settings.language ==
-                                          AppSettings.english,
+                                      selected:
+                                      _settings
+                                          .language ==
+                                          AppSettings
+                                              .english,
                                       onTap: () {
-                                        _settings.language =
-                                            AppSettings.english;
+                                        _settings
+                                            .language =
+                                            AppSettings
+                                                .english;
                                       },
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: _SettingsLanguageButton(
+                                    child:
+                                    _SettingsLanguageButton(
                                       label: 'Filipino',
-                                      selected: _settings.language ==
-                                          AppSettings.filipino,
+                                      selected:
+                                      _settings
+                                          .language ==
+                                          AppSettings
+                                              .filipino,
                                       onTap: () {
-                                        _settings.language =
-                                            AppSettings.filipino;
+                                        _settings
+                                            .language =
+                                            AppSettings
+                                                .filipino;
                                       },
                                     ),
                                   ),
                                 ],
                               ),
+
                               const SizedBox(height: 24),
+
                               Divider(
                                 color: Colors.white
                                     .withValues(alpha: 0.2),
                               ),
+
                               const SizedBox(height: 8),
+
                               _DialogButton(
-                                label:
-                                isFilipino ? 'TAPOS NA' : 'DONE',
-                                color: const Color(0xFF00E5FF),
+                                label: isFilipino
+                                    ? 'TAPOS NA'
+                                    : 'DONE',
+                                color:
+                                const Color(0xFF00A6C7),
                                 onTap: () =>
-                                    Navigator.pop(dialogContext),
+                                    Navigator.pop(
+                                        dialogContext),
                               ),
                             ],
                           ),
@@ -502,11 +867,19 @@ class _MainMenuState extends State<MainMenu>
           ),
         );
       },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
+      transitionBuilder: (
+          context,
+          animation,
+          secondaryAnimation,
+          child,
+          ) {
         return FadeTransition(
           opacity: animation,
           child: ScaleTransition(
-            scale: Tween<double>(begin: 0.92, end: 1).animate(
+            scale: Tween<double>(
+              begin: 0.92,
+              end: 1,
+            ).animate(
               CurvedAnimation(
                 parent: animation,
                 curve: Curves.easeOutCubic,
@@ -534,9 +907,15 @@ class _MainMenuState extends State<MainMenu>
     );
   }
 
+  // ============================================================
+  // HOW TO PLAY
+  // ============================================================
+
   void showHowToPlay() {
     showInfoDialog(
-      isFilipino ? 'PAANO MAGLARO' : 'HOW TO PLAY',
+      isFilipino
+          ? 'PAANO MAGLARO'
+          : 'HOW TO PLAY',
       isFilipino
           ? 'Basahing mabuti ang bawat sitwasyon.\n\n'
           'Mag-swipe pakaliwa o pakanan upang pumili ng sagot.\n\n'
@@ -547,9 +926,15 @@ class _MainMenuState extends State<MainMenu>
     );
   }
 
+  // ============================================================
+  // CREDITS
+  // ============================================================
+
   void showCredits() {
     showInfoDialog(
-      isFilipino ? 'MGA KREDITO' : 'CREDITS',
+      isFilipino
+          ? 'MGA KREDITO'
+          : 'CREDITS',
       isFilipino
           ? 'STEREOTYPICAL\n\n'
           'Binuo ng inyong pangkat.\n\n'
@@ -560,13 +945,25 @@ class _MainMenuState extends State<MainMenu>
     );
   }
 
-  void showInfoDialog(String title, String message) {
+  // ============================================================
+  // INFO DIALOG
+  // ============================================================
+
+  void showInfoDialog(
+      String title,
+      String message,
+      ) {
     showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierLabel: title,
-      barrierColor: Colors.black.withValues(alpha: 0.25),
-      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+      barrierColor:
+      Colors.black.withValues(alpha: 0.25),
+      pageBuilder: (
+          dialogContext,
+          animation,
+          secondaryAnimation,
+          ) {
         return _GlassDialog(
           title: title,
           children: [
@@ -576,22 +973,33 @@ class _MainMenuState extends State<MainMenu>
               style: const TextStyle(
                 color: Colors.white,
                 height: 1.5,
+                shadows: comicShadows,
               ),
             ),
             const SizedBox(height: 20),
             _DialogButton(
-              label: isFilipino ? 'ISARA' : 'CLOSE',
-              color: const Color(0xFF00E5FF),
-              onTap: () => Navigator.pop(dialogContext),
+              label:
+              isFilipino ? 'ISARA' : 'CLOSE',
+              color: const Color(0xFF00A6C7),
+              onTap: () =>
+                  Navigator.pop(dialogContext),
             ),
           ],
         );
       },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
+      transitionBuilder: (
+          context,
+          animation,
+          secondaryAnimation,
+          child,
+          ) {
         return FadeTransition(
           opacity: animation,
           child: ScaleTransition(
-            scale: Tween<double>(begin: 0.92, end: 1).animate(
+            scale: Tween<double>(
+              begin: 0.92,
+              end: 1,
+            ).animate(
               CurvedAnimation(
                 parent: animation,
                 curve: Curves.easeOutCubic,
@@ -605,7 +1013,99 @@ class _MainMenuState extends State<MainMenu>
   }
 }
 
-class _SettingsVolumeControl extends StatelessWidget {
+// ============================================================
+// COMIC PLAY BUTTON
+// ============================================================
+
+class ComicPlayButton extends StatelessWidget {
+  final double size;
+  final double rotation;
+  final VoidCallback onTap;
+
+  const ComicPlayButton({
+    super.key,
+    required this.size,
+    required this.rotation,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: SweepGradient(
+          transform: GradientRotation(rotation),
+          colors: rainbowColors,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            blurRadius: 0,
+            spreadRadius: 0,
+            offset: Offset(6, 7),
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFF3D2378),
+          border: Border.all(
+            color: Colors.black,
+            width: 4,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: Center(
+              child: Container(
+                width: size * 0.58,
+                height: size * 0.58,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color:
+                  Colors.white.withValues(alpha: 0.12),
+                  border: Border.all(
+                    color:
+                    Colors.white.withValues(alpha: 0.75),
+                    width: 3,
+                  ),
+                ),
+                child: Icon(
+                  Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: size * 0.43,
+                  shadows: const [
+                    Shadow(
+                      color: Colors.black,
+                      offset: Offset(3, 3),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// SETTINGS VOLUME CONTROL
+// ============================================================
+
+class _SettingsVolumeControl
+    extends StatelessWidget {
   final IconData icon;
   final String title;
   final double value;
@@ -628,10 +1128,13 @@ class _SettingsVolumeControl extends StatelessWidget {
         vertical: 10,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
+        color:
+        Colors.white.withValues(alpha: 0.06),
+        borderRadius:
+        BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.12),
+          color:
+          Colors.white.withValues(alpha: 0.12),
         ),
       ),
       child: Column(
@@ -644,7 +1147,7 @@ class _SettingsVolumeControl extends StatelessWidget {
                   icon,
                   color: value == 0
                       ? Colors.white54
-                      : const Color(0xFF00F5FF),
+                      : const Color(0xFF00A6C7),
                   size: 22,
                 ),
               ),
@@ -655,13 +1158,14 @@ class _SettingsVolumeControl extends StatelessWidget {
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
+                    shadows: comicShadows,
                   ),
                 ),
               ),
               Text(
                 '${(value * 100).round()}%',
                 style: const TextStyle(
-                  color: Color(0xFF00F5FF),
+                  color: Color(0xFF00A6C7),
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
@@ -669,13 +1173,19 @@ class _SettingsVolumeControl extends StatelessWidget {
             ],
           ),
           SliderTheme(
-            data: SliderTheme.of(context).copyWith(
+            data:
+            SliderTheme.of(context).copyWith(
               trackHeight: 6,
-              activeTrackColor: const Color(0xFFC45CFF),
-              inactiveTrackColor: Colors.white24,
-              thumbColor: const Color(0xFF39FF14),
-              overlayColor: Colors.transparent,
-              thumbShape: const RoundSliderThumbShape(
+              activeTrackColor:
+              const Color(0xFFC45CFF),
+              inactiveTrackColor:
+              Colors.white24,
+              thumbColor:
+              const Color(0xFF39FF14),
+              overlayColor:
+              Colors.transparent,
+              thumbShape:
+              const RoundSliderThumbShape(
                 enabledThumbRadius: 9,
               ),
             ),
@@ -692,7 +1202,12 @@ class _SettingsVolumeControl extends StatelessWidget {
   }
 }
 
-class _SettingsLanguageButton extends StatelessWidget {
+// ============================================================
+// LANGUAGE BUTTON
+// ============================================================
+
+class _SettingsLanguageButton
+    extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -707,22 +1222,31 @@ class _SettingsLanguageButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius:
+      BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding:
+        const EdgeInsets.symmetric(
+          vertical: 14,
+        ),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFFC45CFF).withValues(alpha: 0.2)
-              : Colors.white.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(14),
+              ? const Color(0xFFC45CFF)
+              .withValues(alpha: 0.2)
+              : Colors.white
+              .withValues(alpha: 0.04),
+          borderRadius:
+          BorderRadius.circular(14),
           border: Border.all(
             color: selected
                 ? const Color(0xFFC45CFF)
-                : Colors.white.withValues(alpha: 0.25),
+                : Colors.white
+                .withValues(alpha: 0.25),
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+          MainAxisAlignment.center,
           children: [
             if (selected) ...[
               const Icon(
@@ -736,8 +1260,10 @@ class _SettingsLanguageButton extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.white,
-                fontWeight:
-                selected ? FontWeight.bold : FontWeight.normal,
+                fontWeight: selected
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+                shadows: comicShadows,
               ),
             ),
           ],
@@ -747,7 +1273,12 @@ class _SettingsLanguageButton extends StatelessWidget {
   }
 }
 
-class _DialogButton extends StatelessWidget {
+// ============================================================
+// DIALOG BUTTON
+// ============================================================
+
+class _DialogButton
+    extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
@@ -764,22 +1295,30 @@ class _DialogButton extends StatelessWidget {
       width: double.infinity,
       child: OutlinedButton(
         onPressed: onTap,
-        style: OutlinedButton.styleFrom(
+        style:
+        OutlinedButton.styleFrom(
           foregroundColor: color,
-          side: BorderSide(color: color.withValues(alpha: 0.8)),
-          padding: const EdgeInsets.symmetric(
+          side: BorderSide(
+            color:
+            color.withValues(alpha: 0.8),
+          ),
+          padding:
+          const EdgeInsets.symmetric(
             horizontal: 18,
             vertical: 13,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+          shape:
+          RoundedRectangleBorder(
+            borderRadius:
+            BorderRadius.circular(14),
           ),
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight:
+            FontWeight.bold,
             letterSpacing: 1,
           ),
         ),
@@ -788,7 +1327,12 @@ class _DialogButton extends StatelessWidget {
   }
 }
 
-class _GlassDialog extends StatelessWidget {
+// ============================================================
+// GLASS DIALOG
+// ============================================================
+
+class _GlassDialog
+    extends StatelessWidget {
   final String title;
   final List<Widget> children;
 
@@ -803,9 +1347,11 @@ class _GlassDialog extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding:
+          const EdgeInsets.all(20),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius:
+            BorderRadius.circular(28),
             child: BackdropFilter(
               filter: ImageFilter.blur(
                 sigmaX: 20,
@@ -813,42 +1359,81 @@ class _GlassDialog extends StatelessWidget {
               ),
               child: Container(
                 width: 420,
-                constraints: BoxConstraints(
+                constraints:
+                BoxConstraints(
                   maxHeight:
-                  MediaQuery.of(context).size.height * 0.85,
+                  MediaQuery.of(context)
+                      .size
+                      .height *
+                      0.85,
                 ),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF111126)
-                      .withValues(alpha: 0.20),
-                  borderRadius: BorderRadius.circular(28),
+                padding:
+                const EdgeInsets.all(24),
+                decoration:
+                BoxDecoration(
+                  color: const Color(
+                    0xFF111126,
+                  ).withValues(
+                    alpha: 0.20,
+                  ),
+                  borderRadius:
+                  BorderRadius.circular(
+                    28,
+                  ),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.28),
+                    color: Colors.white
+                        .withValues(
+                      alpha: 0.28,
+                    ),
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFC45CFF)
-                          .withValues(alpha: 0.12),
+                      color:
+                      const Color(
+                        0xFFC45CFF,
+                      ).withValues(
+                        alpha: 0.12,
+                      ),
                       blurRadius: 30,
                     ),
                   ],
                 ),
-                child: SingleChildScrollView(
+                child:
+                SingleChildScrollView(
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize:
+                    MainAxisSize.min,
                     children: [
                       Text(
                         title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFE6B4FF),
+                        textAlign:
+                        TextAlign.center,
+                        style:
+                        const TextStyle(
+                          color:
+                          Colors.white,
                           fontSize: 20,
-                          fontWeight: FontWeight.w900,
+                          fontWeight:
+                          FontWeight.w900,
                           letterSpacing: 1.5,
+                          shadows: [
+                            Shadow(
+                              color:
+                              Colors.black,
+                              offset:
+                              Offset(
+                                2,
+                                2,
+                              ),
+                              blurRadius: 0,
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(
+                        height: 24,
+                      ),
                       ...children,
                     ],
                   ),
@@ -862,7 +1447,12 @@ class _GlassDialog extends StatelessWidget {
   }
 }
 
-class StereotypicalLogo extends StatelessWidget {
+// ============================================================
+// STEREOTYPICAL LOGO
+// ============================================================
+
+class StereotypicalLogo
+    extends StatelessWidget {
   final double size;
   final double rotation;
   final Animation<double> animation;
@@ -879,7 +1469,8 @@ class StereotypicalLogo extends StatelessWidget {
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
-        final currentRotation = animation.value * 6.28318;
+        final currentRotation =
+            animation.value * 6.28318;
 
         return SizedBox(
           width: size,
@@ -887,79 +1478,158 @@ class StereotypicalLogo extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
+              // ==================================================
+              // BACKGROUND SYMBOL
+              // ==================================================
+
               Opacity(
-                opacity: 0.22,
-                child: ShaderMask(
-                  blendMode: BlendMode.srcIn,
-                  shaderCallback: (bounds) {
-                    return const LinearGradient(
-                      colors: rainbowColors,
-                    ).createShader(bounds);
-                  },
-                  child: Transform.translate(
-                    offset: Offset(0, size * 0.08),
-                    child: Text(
-                      '⚧',
-                      style: TextStyle(
-                        fontSize: size * 0.65,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                opacity: 0.25,
+                child: Transform.translate(
+                  offset: Offset(
+                    0,
+                    size * 0.08,
+                  ),
+                  child: Text(
+                    '⚧',
+                    style: TextStyle(
+                      fontSize:
+                      size * 0.65,
+                      fontWeight:
+                      FontWeight.bold,
+                      color:
+                      Colors.white,
+                      shadows: const [
+                        Shadow(
+                          color:
+                          Colors.black,
+                          offset:
+                          Offset(4, 5),
+                          blurRadius: 0,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
+
+              // ==================================================
+              // LOGO TEXT
+              // ==================================================
+
               Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: size * 0.07,
+                padding:
+                EdgeInsets.symmetric(
+                  horizontal:
+                  size * 0.07,
                 ),
                 child: FittedBox(
-                  fit: BoxFit.scaleDown,
+                  fit:
+                  BoxFit.scaleDown,
                   child: Stack(
-                    alignment: Alignment.center,
+                    alignment:
+                    Alignment.center,
                     children: [
+                      // Thick black comic outline
                       Text(
                         'STEREOTYPICAL',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: size * 0.12,
-                          fontWeight: FontWeight.w900,
+                        textAlign:
+                        TextAlign.center,
+                        style:
+                        TextStyle(
+                          fontSize:
+                          size * 0.12,
+                          fontWeight:
+                          FontWeight.w900,
                           letterSpacing: 1,
-                          foreground: Paint()
-                            ..style = PaintingStyle.stroke
-                            ..strokeWidth = 4
-                            ..color = const Color(0xFF240044),
+                          foreground:
+                          Paint()
+                            ..style =
+                                PaintingStyle
+                                    .stroke
+                            ..strokeWidth =
+                            11
+                            ..strokeJoin =
+                                StrokeJoin
+                                    .round
+                            ..color =
+                                Colors.black,
                         ),
                       ),
+
+                      // Secondary purple outline
+                      Text(
+                        'STEREOTYPICAL',
+                        textAlign:
+                        TextAlign.center,
+                        style:
+                        TextStyle(
+                          fontSize:
+                          size * 0.12,
+                          fontWeight:
+                          FontWeight.w900,
+                          letterSpacing: 1,
+                          foreground:
+                          Paint()
+                            ..style =
+                                PaintingStyle
+                                    .stroke
+                            ..strokeWidth =
+                            5
+                            ..strokeJoin =
+                                StrokeJoin
+                                    .round
+                            ..color =
+                            const Color(
+                              0xFF5B248F,
+                            ),
+                        ),
+                      ),
+
+                      // Main comic text
                       ShaderMask(
-                        blendMode: BlendMode.srcIn,
-                        shaderCallback: (bounds) {
+                        blendMode:
+                        BlendMode.srcIn,
+                        shaderCallback:
+                            (bounds) {
                           return const LinearGradient(
-                            colors: rainbowColors,
-                          ).createShader(bounds);
+                            begin:
+                            Alignment.topLeft,
+                            end:
+                            Alignment.bottomRight,
+                            colors: [
+                              Color(
+                                0xFFFF4FCB,
+                              ),
+                              Color(
+                                0xFFFFE94A,
+                              ),
+                              Color(
+                                0xFF62F04A,
+                              ),
+                              Color(
+                                0xFF39DFFF,
+                              ),
+                              Color(
+                                0xFFA45BFF,
+                              ),
+                            ],
+                          ).createShader(
+                            bounds,
+                          );
                         },
                         child: Text(
                           'STEREOTYPICAL',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: size * 0.12,
-                            fontWeight: FontWeight.w900,
+                          textAlign:
+                          TextAlign.center,
+                          style:
+                          TextStyle(
+                            fontSize:
+                            size * 0.12,
+                            fontWeight:
+                            FontWeight.w900,
                             letterSpacing: 1,
-                            color: Colors.white,
-                            shadows: const [
-                              Shadow(
-                                color: Color(0xFFFF00E6),
-                                blurRadius: 12,
-                              ),
-                              Shadow(
-                                color: Color(0xFF00F5FF),
-                                blurRadius: 18,
-                              ),
-                              Shadow(
-                                color: Color(0xFF9D00FF),
-                                blurRadius: 22,
-                              ),
-                            ],
+                            color:
+                            Colors.white,
                           ),
                         ),
                       ),
@@ -967,32 +1637,72 @@ class StereotypicalLogo extends StatelessWidget {
                   ),
                 ),
               ),
+
+              // ==================================================
+              // COMIC RAINBOW SLASH
+              // ==================================================
+
               Transform.rotate(
                 angle: -0.72,
-                child: Container(
-                  width: size * 1.08,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    gradient: SweepGradient(
-                      transform: GradientRotation(currentRotation),
-                      colors: rainbowColors,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: rainbowColors[
-                        (animation.value * 5).floor() % 5
-                        ].withValues(alpha: 0.65),
-                        blurRadius: 12,
+                child: Stack(
+                  alignment:
+                  Alignment.center,
+                  children: [
+                    // Black outline
+                    Container(
+                      width:
+                      size * 1.10,
+                      height: 11,
+                      decoration:
+                      BoxDecoration(
+                        color:
+                        Colors.black,
+                        borderRadius:
+                        BorderRadius
+                            .circular(
+                          20,
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+
+                    // Animated rainbow strip
+                    Container(
+                      width:
+                      size * 1.04,
+                      height: 6,
+                      decoration:
+                      BoxDecoration(
+                        gradient:
+                        SweepGradient(
+                          transform:
+                          GradientRotation(
+                            currentRotation,
+                          ),
+                          colors:
+                          rainbowColors,
+                        ),
+                        borderRadius:
+                        BorderRadius
+                            .circular(
+                          20,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+
+              // ==================================================
+              // ANIMATED COMIC CIRCLE
+              // ==================================================
+
               CustomPaint(
-                size: Size(size, size),
-                painter: RainbowCirclePainter(
-                  rotation: currentRotation,
+                size:
+                Size(size, size),
+                painter:
+                RainbowCirclePainter(
+                  rotation:
+                  currentRotation,
                 ),
               ),
             ],
@@ -1003,43 +1713,131 @@ class StereotypicalLogo extends StatelessWidget {
   }
 }
 
-class RainbowCirclePainter extends CustomPainter {
+// ============================================================
+// RAINBOW CIRCLE PAINTER
+// ============================================================
+
+class RainbowCirclePainter
+    extends CustomPainter {
   final double rotation;
 
-  RainbowCirclePainter({required this.rotation});
+  RainbowCirclePainter({
+    required this.rotation,
+  });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final radius = size.width / 2 - 4;
+  void paint(
+      Canvas canvas,
+      Size size,
+      ) {
+    final rect =
+    Offset.zero & size;
 
-    final shader = SweepGradient(
-      transform: GradientRotation(rotation),
-      colors: rainbowColors,
+    final center =
+        rect.center;
+
+    final radius =
+        size.width / 2 - 8;
+
+    // ==========================================================
+    // HARD BLACK COMIC SHADOW
+    // ==========================================================
+
+    final shadowPaint = Paint()
+      ..style =
+          PaintingStyle.stroke
+      ..strokeWidth = 12
+      ..color =
+          Colors.black;
+
+    canvas.drawCircle(
+      center.translate(5, 6),
+      radius,
+      shadowPaint,
+    );
+
+    // ==========================================================
+    // BLACK OUTER OUTLINE
+    // ==========================================================
+
+    final outlinePaint = Paint()
+      ..style =
+          PaintingStyle.stroke
+      ..strokeWidth = 12
+      ..color =
+          Colors.black;
+
+    canvas.drawCircle(
+      center,
+      radius,
+      outlinePaint,
+    );
+
+    // ==========================================================
+    // ANIMATED RAINBOW
+    // ==========================================================
+
+    final shader =
+    SweepGradient(
+      transform:
+      GradientRotation(
+        rotation,
+      ),
+      colors:
+      rainbowColors,
     ).createShader(rect);
 
-    final glowPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 8
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7)
+    final rainbowPaint = Paint()
+      ..style =
+          PaintingStyle.stroke
+      ..strokeWidth = 7
       ..shader = shader;
 
-    final circlePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 8
-      ..shader = shader;
+    canvas.drawCircle(
+      center,
+      radius,
+      rainbowPaint,
+    );
 
-    canvas.drawCircle(rect.center, radius, glowPaint);
-    canvas.drawCircle(rect.center, radius, circlePaint);
+    // ==========================================================
+    // WHITE COMIC HIGHLIGHT
+    // ==========================================================
+
+    final highlightPaint = Paint()
+      ..style =
+          PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = Colors.white
+          .withValues(alpha: 0.75);
+
+    canvas.drawArc(
+      Rect.fromCircle(
+        center: center,
+        radius: radius - 3,
+      ),
+      -2.7,
+      1.35,
+      false,
+      highlightPaint,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant RainbowCirclePainter oldDelegate) {
-    return oldDelegate.rotation != rotation;
+  bool shouldRepaint(
+      covariant RainbowCirclePainter
+      oldDelegate,
+      ) {
+    return oldDelegate.rotation !=
+        rotation;
   }
 }
 
-class NeonIcon extends StatelessWidget {
+// ============================================================
+// COMIC ICON
+// ============================================================
+
+class NeonIcon
+    extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
@@ -1059,106 +1857,71 @@ class NeonIcon extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(40),
+        borderRadius:
+        BorderRadius.circular(40),
         child: Container(
           width: size,
           height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0xFF21104D)
-                .withValues(alpha: 0.82),
+          decoration:
+          BoxDecoration(
+            shape:
+            BoxShape.circle,
+
+            // Main comic color
+            color: color,
+
+            // Thick black comic outline
             border: Border.all(
-              color: color,
-              width: 2,
+              color:
+              Colors.black,
+              width: 4,
             ),
-            boxShadow: [
+
+            // Hard offset shadow
+            boxShadow: const [
               BoxShadow(
-                color: color.withValues(alpha: 0.7),
-                blurRadius: 13,
-                spreadRadius: 1,
+                color:
+                Colors.black,
+                blurRadius: 0,
+                spreadRadius: 0,
+                offset:
+                Offset(5, 6),
               ),
             ],
           ),
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: size * 0.54,
-            shadows: [
-              Shadow(
-                color: color,
-                blurRadius: 12,
+          child: Container(
+            margin:
+            const EdgeInsets.all(4),
+            decoration:
+            BoxDecoration(
+              shape:
+              BoxShape.circle,
+              color: Colors.white
+                  .withValues(
+                alpha: 0.16,
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MenuButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _MenuButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFF241071),
-      borderRadius: BorderRadius.circular(100),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(100),
-        child: Container(
-          height: 78,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(100),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF5417D7),
-                Color(0xFF25106E),
-                Color(0xFF0759B9),
-              ],
-            ),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.7),
-              width: 1.5,
-            ),
-          ),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 38,
+              border:
+              Border.all(
+                color: Colors.white
+                    .withValues(
+                  alpha: 0.90,
                 ),
-                const SizedBox(width: 10),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 25,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                    shadows: [
-                      Shadow(
-                        color: Color(0xFFEA66FF),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
+                width: 2,
+              ),
+            ),
+            child: Icon(
+              icon,
+              color:
+              Colors.white,
+              size:
+              size * 0.54,
+              shadows: const [
+                Shadow(
+                  color:
+                  Colors.black,
+                  offset:
+                  Offset(3, 3),
+                  blurRadius: 0,
                 ),
               ],
             ),
@@ -1168,3 +1931,4 @@ class _MenuButton extends StatelessWidget {
     );
   }
 }
+

@@ -3,6 +3,13 @@ import 'package:flutter/material.dart';
 import 'app_settings.dart';
 import 'game/game_session.dart';
 
+const List<Shadow> comicShadows = [
+  Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(-2, -2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(2, -2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(-2, 2), blurRadius: 0),
+];
+
 /// End-of-round summary with a review of the cards that were missed.
 class ResultsScreen extends StatelessWidget {
   const ResultsScreen({super.key, required this.session});
@@ -52,6 +59,7 @@ class ResultsScreen extends StatelessWidget {
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 3,
+                      shadows: comicShadows,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -72,6 +80,7 @@ class ResultsScreen extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.5,
+                        shadows: comicShadows,
                       ),
                     ),
                   ),
@@ -158,6 +167,7 @@ class ResultsScreen extends StatelessWidget {
               fontSize: 44,
               fontWeight: FontWeight.w900,
               height: 1,
+              shadows: comicShadows,
             ),
           ),
           const SizedBox(height: 8),
@@ -168,6 +178,7 @@ class ResultsScreen extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.bold,
               letterSpacing: 1,
+              shadows: comicShadows,
             ),
           ),
           const SizedBox(height: 10),
@@ -177,6 +188,7 @@ class ResultsScreen extends StatelessWidget {
             style: const TextStyle(
               color: Color(0xFFE6B4FF),
               fontSize: 15,
+              shadows: comicShadows,
             ),
           ),
         ],
@@ -202,6 +214,7 @@ class ResultsScreen extends StatelessWidget {
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.bold,
+              shadows: comicShadows,
             ),
           ),
         ],
@@ -251,6 +264,7 @@ class _MissedCard extends StatelessWidget {
               color: Colors.white,
               fontSize: 14,
               height: 1.35,
+              shadows: comicShadows,
             ),
           ),
           const SizedBox(height: 8),
@@ -263,6 +277,7 @@ class _MissedCard extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
+              shadows: comicShadows,
             ),
           ),
           const SizedBox(height: 6),
@@ -272,6 +287,7 @@ class _MissedCard extends StatelessWidget {
               color: Colors.white70,
               fontSize: 12,
               height: 1.35,
+              shadows: comicShadows,
             ),
           ),
         ],
@@ -309,6 +325,7 @@ class _ActionButton extends StatelessWidget {
         style: const TextStyle(
           fontWeight: FontWeight.bold,
           letterSpacing: 1,
+          shadows: comicShadows,
         ),
       ),
     );
