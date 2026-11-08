@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'game/achievement_service.dart';
 
 class AchievementScreen extends StatelessWidget {
   const AchievementScreen({super.key});
@@ -10,86 +10,13 @@ class AchievementScreen extends StatelessWidget {
   static const Color neonGreen = Color(0xFF39FF14);
   static const Color neonBlue = Color(0xFF00E5FF);
 
-  final List<Map<String, dynamic>> achievements = const [
-    {
-      'title': 'First Steps',
-      'description': 'Play your first game.',
-      'icon': Icons.play_arrow_rounded,
-      'progress': 1.0,
-      'completed': true,
-      'color': neonGreen,
-    },
-    {
-      'title': 'Learner of Stereotypes',
-      'description': 'Play 5 games.',
-      'icon': Icons.sports_esports_rounded,
-      'progress': 0.6,
-      'completed': false,
-      'color': neonPink,
-    },
-    {
-      'title': 'High Scorer',
-      'description': 'Reach a score of 1,000.',
-      'icon': Icons.emoji_events_rounded,
-      'progress': 0.35,
-      'completed': false,
-      'color': neonYellow,
-    },
-    {
-      'title': 'Dedicated Player',
-      'description': 'Play 10 games.',
-      'icon': Icons.local_fire_department_rounded,
-      'progress': 0.2,
-      'completed': false,
-      'color': neonBlue,
-    },
-    {
-      'title':'Esteemed Guest',
-      'description':'Play a game with more than 5 correct guesses',
-      'icon':Icons.emoji_events_rounded,
-      'progress':0.0,
-      'completed':false,
-      'color':neonGreen,
-    },
-    {
-      'title':"Typecaster",
-      'description':'Play a game with less than 5 correct guesses',
-      'icon':Icons.emoji_events_rounded,
-      'progress':0.0,
-      'completed':false,
-      'color':neonPink,
-    },
-
-    {
-      'title': 'Definitely (not) Judgemental',
-      'description': 'Complete a game without mistakes.',
-      'icon': Icons.stars_rounded,
-      'progress': 0.0,
-      'completed': false,
-      'color': neonPink,
-    },
-    {
-      'title':'Uy, Pilipins!',
-      'description':'Play the game on Filipino Language for the first time.',
-      'icon':Icons.language_rounded,
-      'progress':0.0,
-      'completed':false,
-      'color':neonYellow,
-    },
-    {
-      'title': 'Gaypletionist',
-      'description': 'Unlock all achievements.',
-      'icon': Icons.military_tech_rounded,
-      'progress': 0.0,
-      'completed': false,
-      'color': neonYellow,
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final achievementService = AchievementScope.of(context);
+    final achievements = achievementService.getAchievements();
+
     final completedCount =
-        achievements.where((achievement) => achievement['completed'] as bool).length;
+        achievements.where((achievement) => achievement.completed).length;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -173,11 +100,13 @@ class AchievementScreen extends StatelessWidget {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: LinearProgressIndicator(
-                            value: completedCount / achievements.length,
+                            value: achievements.isEmpty
+                                ? 0.0
+                                : completedCount / achievements.length,
                             minHeight: 8,
                             backgroundColor: Colors.white12,
                             valueColor:
-                            const AlwaysStoppedAnimation<Color>(neonGreen),
+                                const AlwaysStoppedAnimation<Color>(neonGreen),
                           ),
                         ),
                       ],
@@ -209,8 +138,8 @@ class AchievementScreen extends StatelessWidget {
                 itemCount: achievements.length,
                 itemBuilder: (context, index) {
                   final achievement = achievements[index];
-                  final bool completed = achievement['completed'];
-                  final Color color = achievement['color'];
+                  final bool completed = achievement.completed;
+                  final Color color = achievement.color;
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 14),
@@ -237,7 +166,7 @@ class AchievementScreen extends StatelessWidget {
                           ),
                           child: Icon(
                             completed
-                                ? achievement['icon']
+                                ? achievement.icon
                                 : Icons.lock_rounded,
                             color: completed ? color : Colors.white38,
                             size: 29,
@@ -249,7 +178,7 @@ class AchievementScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                achievement['title'],
+                                achievement.title,
                                 style: TextStyle(
                                   color: completed ? color : Colors.white,
                                   fontSize: 15,
@@ -258,7 +187,7 @@ class AchievementScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                achievement['description'],
+                                achievement.description,
                                 style: const TextStyle(
                                   color: Colors.white60,
                                   fontSize: 12,
@@ -268,11 +197,11 @@ class AchievementScreen extends StatelessWidget {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
                                 child: LinearProgressIndicator(
-                                  value: achievement['progress'],
+                                  value: achievement.progress,
                                   minHeight: 5,
                                   backgroundColor: Colors.white12,
                                   valueColor:
-                                  AlwaysStoppedAnimation<Color>(color),
+                                      AlwaysStoppedAnimation<Color>(color),
                                 ),
                               ),
                             ],
