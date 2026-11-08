@@ -20,7 +20,7 @@ class AchievementScreen extends StatelessWidget {
       'color': neonGreen,
     },
     {
-      'title': 'Getting Started',
+      'title': 'Learner of Stereotypes',
       'description': 'Play 5 games.',
       'icon': Icons.sports_esports_rounded,
       'progress': 0.6,
@@ -44,7 +44,24 @@ class AchievementScreen extends StatelessWidget {
       'color': neonBlue,
     },
     {
-      'title': 'Perfect Run',
+      'title':'Esteemed Guest',
+      'description':'Play a game with more than 5 correct guesses',
+      'icon':Icons.emoji_events_rounded,
+      'progress':0.0,
+      'completed':false,
+      'color':neonGreen,
+    },
+    {
+      'title':"Typecaster",
+      'description':'Play a game with less than 5 correct guesses',
+      'icon':Icons.emoji_events_rounded,
+      'progress':0.0,
+      'completed':false,
+      'color':neonPink,
+    },
+
+    {
+      'title': 'Definitely (not) Judgemental',
       'description': 'Complete a game without mistakes.',
       'icon': Icons.stars_rounded,
       'progress': 0.0,
@@ -52,7 +69,15 @@ class AchievementScreen extends StatelessWidget {
       'color': neonPink,
     },
     {
-      'title': 'Champion',
+      'title':'Uy, Pilipins!',
+      'description':'Play the game on Filipino Language for the first time.',
+      'icon':Icons.language_rounded,
+      'progress':0.0,
+      'completed':false,
+      'color':neonYellow,
+    },
+    {
+      'title': 'Gaypletionist',
       'description': 'Unlock all achievements.',
       'icon': Icons.military_tech_rounded,
       'progress': 0.0,
