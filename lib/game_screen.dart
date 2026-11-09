@@ -1,15 +1,23 @@
-
 import 'dart:async';
 import 'dart:ui';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 import 'app_settings.dart';
+import 'achievement_system.dart';
 import 'content/situation.dart';
 import 'content/situation_repository.dart';
 import 'game/game_session.dart';
 import 'results_screen.dart';
+
+const List<Shadow> comicShadows = [
+  Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(-2, -2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(2, -2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(-2, 2), blurRadius: 0),
+];
 
 class GameScreen extends StatefulWidget {
   const GameScreen({
@@ -24,11 +32,14 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> {
+  bool _canPop = false;
   double _dragOffset = 0;
   double _dragY = 0;
 
   late AppSettings _settings;
   final AudioPlayer _sfxPlayer = AudioPlayer();
+
+  late VideoPlayerController _gameVideoController;
 
   List<Situation> _cards = const [];
   GameSession? _session;
@@ -46,6 +57,12 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
+
+    _gameVideoController = VideoPlayerController.asset(
+      'assets/videos/GamePlay.mp4',
+    );
+
+    _initializeGameVideo();
     _loadCards();
   }
 
@@ -56,10 +73,29 @@ class _GameScreenState extends State<GameScreen> {
     _settings = SettingsScope.of(context);
   }
 
+  Future<void> _initializeGameVideo() async {
+    try {
+      await _gameVideoController.initialize();
+      await _gameVideoController.setLooping(true);
+      await _gameVideoController.play();
+
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (error) {
+      debugPrint('GamePlay.mp4 failed to load: $error');
+
+      if (mounted) {
+        setState(() {});
+      }
+    }
+  }
+
   @override
   void dispose() {
     _resolveTimer?.cancel();
     _sfxPlayer.dispose();
+    _gameVideoController.dispose();
     super.dispose();
   }
 
@@ -105,6 +141,7 @@ class _GameScreenState extends State<GameScreen> {
         _isAnimatingOut = false;
         _resetDrag();
       });
+      _settings.achievements.recordGameStarted();
     } catch (error) {
       if (!mounted) return;
 
@@ -140,6 +177,7 @@ class _GameScreenState extends State<GameScreen> {
       _isAnimatingOut = false;
       _resetDrag();
     });
+    _settings.achievements.recordGameStarted();
   }
 
   void _resetDrag() {
@@ -183,6 +221,25 @@ class _GameScreenState extends State<GameScreen> {
     _playSwipeSfx();
 
     session.answer(side);
+    final currentCard = session.current;
+    final feedback = session.answer(side);
+
+    final elapsed = _settings.achievements.cardStartTime != null
+        ? DateTime.now().difference(_settings.achievements.cardStartTime!).inMilliseconds / 1000.0
+        : 1.0;
+
+    if (currentCard != null) {
+      final unlocked = _settings.achievements.recordAnswer(
+        situationId: currentCard.id,
+        isStereotype: currentCard.kind == SituationKind.stereotype,
+        isCorrect: feedback.isCorrect,
+        elapsedSeconds: elapsed,
+        swipeDirection: side.name,
+      );
+      if (unlocked != null) {
+        _showAchievementPopup(unlocked);
+      }
+    }
 
     final screenWidth = MediaQuery.of(context).size.width;
     final direction = side == SwipeSide.left ? -1.0 : 1.0;
@@ -204,6 +261,7 @@ class _GameScreenState extends State<GameScreen> {
         _dragOffset = 0;
         _dragY = 0;
       });
+      _settings.achievements.incrementExplanationsRead();
     });
   }
 
@@ -232,6 +290,9 @@ class _GameScreenState extends State<GameScreen> {
       _playLowScore();
     } else {
       _playHighScore();
+    final newlyUnlocked = _settings.achievements.recordGameCompleted();
+    if (newlyUnlocked != null) {
+      _showAchievementPopup(newlyUnlocked);
     }
 
     final playAgain = await Navigator.of(context).push<bool>(
@@ -245,12 +306,221 @@ class _GameScreenState extends State<GameScreen> {
     if (playAgain == true) {
       _startNewRound();
     } else if (playAgain == false) {
+      setState(() {
+        _canPop = true;
+      });
       Navigator.of(context).pop();
     }
   }
 
+  void _showAchievementPopup(AchievementDefinition achievement) {
+    final title = achievement.name;
+    final desc = achievement.task;
+
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Achievement Unlocked',
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return SafeArea(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Material(
+                color: Colors.transparent,
+                child: Dismissible(
+                  key: const Key('achievement_notification'),
+                  direction: DismissDirection.horizontal,
+                  onDismissed: (_) {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF111126).withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: achievement.color,
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: achievement.color.withValues(alpha: 0.4),
+                          blurRadius: 25,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: achievement.color.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: achievement.color, width: 1.5),
+                          ),
+                          child: Icon(
+                            achievement.icon,
+                            color: achievement.color,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _isFilipino ? 'NA-UNLOCKED NA TAGUMPAY!' : 'ACHIEVEMENT UNLOCKED!',
+                                style: TextStyle(
+                                  color: achievement.color,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                desc,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, -1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+        );
+      },
+    );
+
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    });
+  }
+
   void _restartGame() {
     _startNewRound();
+  }
+
+  void _confirmExit() {
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Exit',
+      barrierColor: Colors.black.withValues(alpha: 0.25),
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (
+        dialogContext,
+        animation,
+        secondaryAnimation,
+      ) {
+        return _GlassDialog(
+          title: _isFilipino ? 'BUMALIK SA MAIN MENU?' : 'BACK TO MAIN MENU?',
+          children: [
+            Text(
+              _isFilipino
+                  ? 'Sigurado ka bang gusto mong bumalik?'
+                  : 'Are you sure you want to go back?',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _DialogButton(
+                    label: _isFilipino ? 'KANSELAHIN' : 'CANCEL',
+                    color: const Color(0xFF00A6C7),
+                    onTap: () => Navigator.pop(dialogContext),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _DialogButton(
+                    label: _isFilipino ? 'BUMALIK' : 'GO BACK',
+                    color: const Color(0xFFE53935),
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      setState(() {
+                        _canPop = true;
+                      });
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+      transitionBuilder: (
+        context,
+        animation,
+        secondaryAnimation,
+        child,
+      ) {
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(
+              begin: 0.92,
+              end: 1,
+            ).animate(
+              CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              ),
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
   }
 
   void _showSettings() {
@@ -287,7 +557,7 @@ class _GameScreenState extends State<GameScreen> {
                               .withValues(alpha: 0.20),
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.28),
+                            color: Colors.black,
                             width: 1.2,
                           ),
                           boxShadow: [
@@ -401,7 +671,8 @@ class _GameScreenState extends State<GameScreen> {
                               const SizedBox(height: 8),
                               _menuButton(
                                 icon: Icons.restart_alt,
-                                label: _isFilipino ? 'I-restart' : 'Restart',
+                                label:
+                                _isFilipino ? 'I-restart' : 'Restart',
                                 color: Colors.white,
                                 onTap: () {
                                   Navigator.pop(dialogContext);
@@ -409,12 +680,12 @@ class _GameScreenState extends State<GameScreen> {
                                 },
                               ),
                               _menuButton(
-                                icon: Icons.exit_to_app,
+                                icon: Icons.exit_to_app_rounded,
                                 label: _isFilipino ? 'Lumabas' : 'Exit',
-                                color: const Color(0xFFFF4DDB),
+                                color: const Color(0xFFE53935),
                                 onTap: () {
                                   Navigator.pop(dialogContext);
-                                  Navigator.pop(this.context);
+                                  _confirmExit();
                                 },
                               ),
                             ],
@@ -621,13 +892,26 @@ class _GameScreenState extends State<GameScreen> {
             right: 0,
             top: 0,
             child: Transform.translate(
-              offset: const Offset(0, 35),
+              offset: const Offset(0, 23),
               child: SizedBox(
                 height: 50,
                 width: double.infinity,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
+                    Text(
+                      'STEREOTYPICAL',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                        foreground: Paint()
+                          ..style = PaintingStyle.stroke
+                          ..strokeWidth = 7
+                          ..strokeJoin = StrokeJoin.round
+                          ..color = Colors.black,
+                      ),
+                    ),
                     ShaderMask(
                       blendMode: BlendMode.srcIn,
                       shaderCallback: (bounds) {
@@ -646,7 +930,7 @@ class _GameScreenState extends State<GameScreen> {
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 26,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w900,
                           letterSpacing: 2,
                         ),
                       ),
@@ -689,29 +973,42 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(
-            'assets/rainbow.gif',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return const ColoredBox(
-                color: Color(0xFF080817),
-              );
-            },
-          ),
-          Container(
-            color: Colors.black.withValues(alpha: 0.15),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: _buildBody(),
+    return PopScope(
+      canPop: _canPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _confirmExit();
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildGameVideoBackground(),
+
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: _buildBody(),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameVideoBackground() {
+    if (!_gameVideoController.value.isInitialized) {
+      return const SizedBox.expand();
+    }
+
+    return FittedBox(
+      fit: BoxFit.cover,
+      child: SizedBox(
+        width: _gameVideoController.value.size.width,
+        height: _gameVideoController.value.size.height,
+        child: VideoPlayer(_gameVideoController),
       ),
     );
   }
@@ -742,8 +1039,10 @@ class _GameScreenState extends State<GameScreen> {
                 : 'Swipe the card toward the side it belongs to.',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFFE6B4FF),
+              color: Colors.white,
               fontSize: 13,
+              fontWeight: FontWeight.bold,
+              shadows: comicShadows,
             ),
           ),
         Expanded(
@@ -780,6 +1079,7 @@ class _GameScreenState extends State<GameScreen> {
             style: const TextStyle(
               color: Color(0xFFE6B4FF),
               fontSize: 14,
+              shadows: comicShadows,
             ),
           ),
         ],
@@ -807,6 +1107,7 @@ class _GameScreenState extends State<GameScreen> {
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.bold,
+              shadows: comicShadows,
             ),
           ),
           const SizedBox(height: 8),
@@ -818,6 +1119,7 @@ class _GameScreenState extends State<GameScreen> {
             style: const TextStyle(
               color: Colors.white54,
               fontSize: 11,
+              shadows: comicShadows,
             ),
           ),
           const SizedBox(height: 18),
@@ -827,7 +1129,9 @@ class _GameScreenState extends State<GameScreen> {
               foregroundColor: const Color(0xFF00E5FF),
               side: const BorderSide(color: Color(0xFF00E5FF)),
             ),
-            child: Text(_isFilipino ? 'SUBUKAN MULI' : 'RETRY'),
+            child: Text(
+              _isFilipino ? 'SUBUKAN MULI' : 'RETRY',
+            ),
           ),
         ],
       ),
@@ -851,6 +1155,7 @@ class _GameScreenState extends State<GameScreen> {
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              shadows: comicShadows,
             ),
           ),
           const SizedBox(height: 18),
@@ -865,10 +1170,12 @@ class _GameScreenState extends State<GameScreen> {
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: _confirmExit,
             child: Text(
               _isFilipino ? 'BUMALIK SA MENU' : 'BACK TO MENU',
-              style: const TextStyle(color: Color(0xFFFF4DDB)),
+              style: const TextStyle(
+                color: Color(0xFFFF4DDB),
+              ),
             ),
           ),
         ],
@@ -894,11 +1201,16 @@ class _GameScreenState extends State<GameScreen> {
 
   Widget _statPill(String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 7,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        border: Border.all(
+          color: color.withValues(alpha: 0.5),
+        ),
       ),
       child: Text(
         label,
@@ -915,29 +1227,45 @@ class _GameScreenState extends State<GameScreen> {
   Widget _cardArea(GameSession session) {
     final card = session.current;
 
-    if (card == null) return const SizedBox.shrink();
+    if (card == null) {
+      return const SizedBox.shrink();
+    }
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final cardRotation = (_dragOffset / 1000).clamp(-0.25, 0.25);
+
+    final cardRotation =
+    (_dragOffset / 1000).clamp(-0.25, 0.25);
+
     final dx = _dragOffset.clamp(
       -screenWidth * 1.5,
       screenWidth * 1.5,
     );
-    final dy = _dragY.clamp(-120.0, 120.0);
-    final text = card.textFor(_settings.languageCode);
+
+    final dy = _dragY.clamp(
+      -120.0,
+      120.0,
+    );
+
+    final text = card.textFor(
+      _settings.languageCode,
+    );
 
     return Center(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onPanStart: (_) {
-          if (_isAnimatingOut || session.awaitingNext) return;
+          if (_isAnimatingOut || session.awaitingNext) {
+            return;
+          }
 
           setState(() {
             _isDragging = true;
           });
         },
         onPanUpdate: (details) {
-          if (_isAnimatingOut || session.awaitingNext) return;
+          if (_isAnimatingOut || session.awaitingNext) {
+            return;
+          }
 
           setState(() {
             _dragOffset += details.delta.dx;
@@ -945,7 +1273,9 @@ class _GameScreenState extends State<GameScreen> {
           });
         },
         onPanEnd: (details) {
-          if (_isAnimatingOut || session.awaitingNext) return;
+          if (_isAnimatingOut || session.awaitingNext) {
+            return;
+          }
 
           _handleSwipeEnd(details);
         },
@@ -955,40 +1285,55 @@ class _GameScreenState extends State<GameScreen> {
           ),
           curve: Curves.easeOutCubic,
           transformAlignment: Alignment.center,
-          transform: Matrix4.translationValues(dx, dy, 0)
-            ..rotateZ(cardRotation),
+          transform: Matrix4.translationValues(
+            dx,
+            dy,
+            0,
+          )..rotateZ(cardRotation),
           width: double.infinity,
           height: double.infinity,
-          constraints: const BoxConstraints(maxHeight: 600),
+          constraints: const BoxConstraints(
+            maxHeight: 600,
+          ),
           padding: const EdgeInsets.all(14),
           child: CustomPaint(
             foregroundPainter: _NeonRainbowBorderPainter(),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.025),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 22,
-                vertical: 24,
-              ),
-              child: Center(
-                child: Text(
-                  text,
-                  textAlign: TextAlign.center,
-                  maxLines: 12,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: _cardFontSize(text),
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
-                    shadows: const [
-                      Shadow(
-                        color: Color(0xFFFF00E6),
-                        blurRadius: 12,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: 16,
+                  sigmaY: 16,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF111126)
+                        .withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 24,
+                  ),
+                  child: Center(
+                    child: Text(
+                      text,
+                      textAlign: TextAlign.center,
+                      maxLines: 12,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: _cardFontSize(text),
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                        shadows: const [
+                          Shadow(
+                            color: Color(0xFFFF00E6),
+                            blurRadius: 12,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -1008,13 +1353,18 @@ class _GameScreenState extends State<GameScreen> {
   Widget _feedbackPanel(GameSession session) {
     final feedback = session.pendingFeedback;
 
-    if (feedback == null) return const SizedBox.shrink();
+    if (feedback == null) {
+      return const SizedBox.shrink();
+    }
 
     final correct = feedback.isCorrect;
+
     final color = correct
         ? const Color(0xFF39FF14)
         : const Color(0xFFFFD740);
-    final isLast = session.answeredCount >= session.total;
+
+    final isLast =
+        session.answeredCount >= session.total;
 
     return SingleChildScrollView(
       child: Container(
@@ -1092,7 +1442,9 @@ class _GameScreenState extends State<GameScreen> {
                   side: BorderSide(
                     color: color.withValues(alpha: 0.85),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -1100,9 +1452,11 @@ class _GameScreenState extends State<GameScreen> {
                 child: Text(
                   isLast
                       ? (_isFilipino
-                          ? 'TINGNAN ANG RESULTA'
-                          : 'SEE RESULTS')
-                      : (_isFilipino ? 'SUSUNOD' : 'NEXT'),
+                      ? 'TINGNAN ANG RESULTA'
+                      : 'SEE RESULTS')
+                      : (_isFilipino
+                      ? 'SUSUNOD'
+                      : 'NEXT'),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1,
@@ -1117,18 +1471,28 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   String _thisWasLabel(
-    SituationKind kind, {
-    required bool correct,
-  }) {
-    final isStereotype = kind == SituationKind.stereotype;
+      SituationKind kind, {
+        required bool correct,
+      }) {
+    final isStereotype =
+        kind == SituationKind.stereotype;
 
     if (_isFilipino) {
-      final label = isStereotype ? 'isang isteryotipo' : 'magalang';
-      return correct ? 'Ito ay $label.' : 'Ito pala ay $label.';
+      final label = isStereotype
+          ? 'isang isteryotipo'
+          : 'magalang';
+
+      return correct
+          ? 'Ito ay $label.'
+          : 'Ito pala ay $label.';
     }
 
-    final label = isStereotype ? 'a stereotype' : 'respectful';
-    return correct ? 'This was $label.' : 'This was actually $label.';
+    final label =
+    isStereotype ? 'a stereotype' : 'respectful';
+
+    return correct
+        ? 'This was $label.'
+        : 'This was actually $label.';
   }
 
   Widget _sideHints() {
@@ -1137,9 +1501,12 @@ class _GameScreenState extends State<GameScreen> {
         Expanded(
           child: _SideHint(
             icon: Icons.arrow_back_rounded,
-            title: _isFilipino ? 'ISTERYOTIPO' : 'STEREOTYPE',
-            subtitle:
-                _isFilipino ? 'I-swipe pakaliwa' : 'Swipe left',
+            title: _isFilipino
+                ? 'ISTERYOTIPO'
+                : 'STEREOTYPE',
+            subtitle: _isFilipino
+                ? 'I-swipe pakaliwa'
+                : 'Swipe left',
             color: const Color(0xFF00E5FF),
             active: _dragOffset < -20,
           ),
@@ -1148,9 +1515,12 @@ class _GameScreenState extends State<GameScreen> {
         Expanded(
           child: _SideHint(
             icon: Icons.arrow_forward_rounded,
-            title: _isFilipino ? 'MAGALANG' : 'RESPECTFUL',
-            subtitle:
-                _isFilipino ? 'I-swipe pakanan' : 'Swipe right',
+            title: _isFilipino
+                ? 'MAGALANG'
+                : 'RESPECTFUL',
+            subtitle: _isFilipino
+                ? 'I-swipe pakanan'
+                : 'Swipe right',
             color: const Color(0xFFFF4DDB),
             active: _dragOffset > 20,
           ),
@@ -1173,11 +1543,21 @@ class _NeonRainbowBorderPainter extends CustomPainter {
     ];
 
     final rect = Offset.zero & size;
-    final borderRect = rect.deflate(2);
+
+    final borderRect = rect.deflate(4);
+
     final rrect = RRect.fromRectAndRadius(
       borderRect,
       const Radius.circular(24),
     );
+
+    // Hard black comic outline for thick border style
+    final blackOutlinePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 7
+      ..color = Colors.black;
+
+    canvas.drawRRect(rrect, blackOutlinePaint);
 
     const gradient = LinearGradient(
       colors: colors,
@@ -1188,24 +1568,38 @@ class _NeonRainbowBorderPainter extends CustomPainter {
     final glowPaint = Paint()
       ..shader = gradient.createShader(rect)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 5
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7);
+      ..strokeWidth = 8
+      ..maskFilter = const MaskFilter.blur(
+        BlurStyle.normal,
+        10,
+      );
 
-    canvas.drawRRect(rrect, glowPaint);
+    canvas.drawRRect(
+      rrect,
+      glowPaint,
+    );
 
     final borderPaint = Paint()
       ..shader = gradient.createShader(rect)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
+      ..strokeWidth = 4;
 
-    canvas.drawRRect(rrect, borderPaint);
+    canvas.drawRRect(
+      rrect,
+      borderPaint,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(
+      covariant CustomPainter oldDelegate,
+      ) {
+    return false;
+  }
 }
 
-class _RainbowStrikeThroughPainter extends CustomPainter {
+class _RainbowStrikeThroughPainter
+    extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const colors = [
@@ -1220,7 +1614,12 @@ class _RainbowStrikeThroughPainter extends CustomPainter {
       ..shader = const LinearGradient(
         colors: colors,
       ).createShader(
-        Rect.fromLTWH(0, 0, size.width, size.height),
+        Rect.fromLTWH(
+          0,
+          0,
+          size.width,
+          size.height,
+        ),
       )
       ..style = PaintingStyle.stroke
       ..strokeWidth = 5
@@ -1236,7 +1635,11 @@ class _RainbowStrikeThroughPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(
+      covariant CustomPainter oldDelegate,
+      ) {
+    return false;
+  }
 }
 
 class _SideHint extends StatelessWidget {
@@ -1263,19 +1666,23 @@ class _SideHint extends StatelessWidget {
         vertical: 10,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: active ? 0.22 : 0.06),
+        color: color.withValues(
+          alpha: active ? 0.22 : 0.06,
+        ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: color.withValues(alpha: active ? 0.95 : 0.35),
+          color: color.withValues(
+            alpha: active ? 0.95 : 0.35,
+          ),
           width: active ? 2 : 1,
         ),
         boxShadow: active
             ? [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.35),
-                  blurRadius: 18,
-                ),
-              ]
+          BoxShadow(
+            color: color.withValues(alpha: 0.35),
+            blurRadius: 18,
+          ),
+        ]
             : const [],
       ),
       child: Column(
@@ -1316,3 +1723,123 @@ class _SideHint extends StatelessWidget {
   }
 }
 
+class _GlassDialog extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _GlassDialog({
+    required this.title,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: 20,
+                sigmaY: 20,
+              ),
+              child: Container(
+                width: 420,
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.85,
+                ),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111126).withValues(alpha: 0.20),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: Colors.black,
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFC45CFF).withValues(alpha: 0.12),
+                      blurRadius: 30,
+                    ),
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black,
+                              offset: Offset(2, 2),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ...children,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DialogButton extends StatelessWidget {
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _DialogButton({
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: color,
+          side: BorderSide(
+            color: color.withValues(alpha: 0.8),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 13,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
+      ),
+    );
+  }
+}

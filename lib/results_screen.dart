@@ -1,10 +1,19 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 import 'app_settings.dart';
 import 'game/game_session.dart';
 
+const List<Shadow> comicShadows = [
+  Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(-2, -2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(2, -2), blurRadius: 0),
+  Shadow(color: Colors.black, offset: Offset(-2, 2), blurRadius: 0),
+];
+
 /// End-of-round summary with a review of the cards that were missed.
-class ResultsScreen extends StatelessWidget {
+class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key, required this.session});
 
   final GameSession session;
@@ -15,30 +24,53 @@ class ResultsScreen extends StatelessWidget {
   static const Color neonPurple = Color(0xFFC45CFF);
 
   @override
+  State<ResultsScreen> createState() => _ResultsScreenState();
+}
+
+class _ResultsScreenState extends State<ResultsScreen> {
+  late final VideoPlayerController _videoController;
+
+  @override
+  void initState() {
+    super.initState();
+    _videoController = VideoPlayerController.asset(
+      'assets/videos/GamePlay.mp4',
+    );
+    _initializeVideo();
+  }
+
+  Future<void> _initializeVideo() async {
+    try {
+      await _videoController.initialize();
+      await _videoController.setLooping(true);
+      await _videoController.play();
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      debugPrint('GamePlay.mp4 failed to load in ResultsScreen: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final settings = SettingsScope.of(context);
     final isFilipino = settings.isFilipino;
-    final missed = session.missed;
-    final accuracy = session.accuracy;
+    final missed = widget.session.missed;
+    final accuracy = widget.session.accuracy;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080817),
+      backgroundColor: Colors.transparent,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF170C63),
-                  Color(0xFF080817),
-                  Color(0xFF3A0B4F),
-                ],
-              ),
-            ),
-          ),
+          _buildVideoBackground(),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -48,10 +80,11 @@ class ResultsScreen extends StatelessWidget {
                     isFilipino ? 'RESULTA' : 'RESULTS',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      color: neonPurple,
+                      color: ResultsScreen.neonPurple,
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 3,
+                      shadows: comicShadows,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -72,6 +105,7 @@ class ResultsScreen extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.5,
+                        shadows: comicShadows,
                       ),
                     ),
                   ),
@@ -99,7 +133,7 @@ class ResultsScreen extends StatelessWidget {
                       Expanded(
                         child: _ActionButton(
                           label: 'MENU',
-                          color: neonPink,
+                          color: ResultsScreen.neonPink,
                           onTap: () => Navigator.pop(context, false),
                         ),
                       ),
@@ -107,7 +141,7 @@ class ResultsScreen extends StatelessWidget {
                       Expanded(
                         child: _ActionButton(
                           label: isFilipino ? 'MAGLARO MULI' : 'PLAY AGAIN',
-                          color: neonGreen,
+                          color: ResultsScreen.neonGreen,
                           onTap: () => Navigator.pop(context, true),
                         ),
                       ),
@@ -118,6 +152,21 @@ class ResultsScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildVideoBackground() {
+    if (!_videoController.value.isInitialized) {
+      return const SizedBox.expand(child: ColoredBox(color: Color(0xFF080817)));
+    }
+
+    return FittedBox(
+      fit: BoxFit.cover,
+      child: SizedBox(
+        width: _videoController.value.size.width,
+        height: _videoController.value.size.height,
+        child: VideoPlayer(_videoController),
       ),
     );
   }
@@ -133,53 +182,58 @@ class ResultsScreen extends StatelessWidget {
                 ? 'Magpatuloy sa pag-aaral!'
                 : 'Keep practicing!');
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: neonPurple.withValues(alpha: 0.6),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: neonPurple.withValues(alpha: 0.2),
-            blurRadius: 24,
-          ),
-        ],
+    return CustomPaint(
+      foregroundPainter: _ThickComicBorderPainter(
+        color: ResultsScreen.neonPurple,
       ),
-      child: Column(
-        children: [
-          Text(
-            '${session.correctCount} / ${session.total}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 44,
-              fontWeight: FontWeight.w900,
-              height: 1,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3A0B4F).withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  '${widget.session.correctCount} / ${widget.session.total}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 44,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                    shadows: comicShadows,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${(accuracy * 100).round()}% ${isFilipino ? 'TAMA' : 'CORRECT'}',
+                  style: const TextStyle(
+                    color: ResultsScreen.neonGreen,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                    shadows: comicShadows,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFFE6B4FF),
+                    fontSize: 15,
+                    shadows: comicShadows,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            '${(accuracy * 100).round()}% ${isFilipino ? 'TAMA' : 'CORRECT'}',
-            style: const TextStyle(
-              color: neonGreen,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFE6B4FF),
-              fontSize: 15,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -191,7 +245,7 @@ class ResultsScreen extends StatelessWidget {
         children: [
           const Icon(
             Icons.auto_awesome_rounded,
-            color: neonGreen,
+            color: ResultsScreen.neonGreen,
             size: 48,
           ),
           const SizedBox(height: 12),
@@ -202,6 +256,7 @@ class ResultsScreen extends StatelessWidget {
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.bold,
+              shadows: comicShadows,
             ),
           ),
         ],
@@ -232,51 +287,99 @@ class _MissedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final correctSide = GameSession.expectedSide(feedback.card);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: ResultsScreen.neonPink.withValues(alpha: 0.35),
+    return CustomPaint(
+      foregroundPainter: _ThickComicBorderPainter(
+        color: ResultsScreen.neonPink,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3A0B4F).withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  feedback.card.textFor(languageCode),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    height: 1.35,
+                    shadows: comicShadows,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isFilipino
+                      ? 'Pinili mo: ${_sideLabel(feedback.chosen)}  •  Tama: ${_sideLabel(correctSide)}'
+                      : 'You chose: ${_sideLabel(feedback.chosen)}  •  Correct: ${_sideLabel(correctSide)}',
+                  style: const TextStyle(
+                    color: ResultsScreen.neonPink,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                    shadows: comicShadows,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  feedback.card.explanationFor(languageCode),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    height: 1.35,
+                    shadows: comicShadows,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            feedback.card.textFor(languageCode),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            isFilipino
-                ? 'Pinili mo: ${_sideLabel(feedback.chosen)}  •  Tama: ${_sideLabel(correctSide)}'
-                : 'You chose: ${_sideLabel(feedback.chosen)}  •  Correct: ${_sideLabel(correctSide)}',
-            style: const TextStyle(
-              color: ResultsScreen.neonPink,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            feedback.card.explanationFor(languageCode),
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-              height: 1.35,
-            ),
-          ),
-        ],
-      ),
     );
+  }
+}
+
+class _ThickComicBorderPainter extends CustomPainter {
+  final Color color;
+
+  _ThickComicBorderPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final borderRect = rect.deflate(2);
+    final rrect = RRect.fromRectAndRadius(
+      borderRect,
+      const Radius.circular(20),
+    );
+
+    final blackOutline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..color = Colors.black;
+
+    canvas.drawRRect(rrect, blackOutline);
+
+    final borderPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..color = color;
+
+    canvas.drawRRect(rrect, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ThickComicBorderPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }
 
@@ -309,6 +412,7 @@ class _ActionButton extends StatelessWidget {
         style: const TextStyle(
           fontWeight: FontWeight.bold,
           letterSpacing: 1,
+          shadows: comicShadows,
         ),
       ),
     );

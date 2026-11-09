@@ -1,4 +1,5 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+import 'achievement_system.dart';
 
 /// App-wide settings shared by every screen.
 ///
@@ -18,6 +19,8 @@ class AppSettings extends ChangeNotifier {
 
   double _previousMusicVolume = defaultMusicVolume;
   double _previousSfxVolume = defaultSfxVolume;
+
+  final AchievementManager achievements = AchievementManager();
 
   String get language => _language;
 
