@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -36,6 +37,7 @@ class _GameScreenState extends State<GameScreen> {
   double _dragY = 0;
 
   late AppSettings _settings;
+  final AudioPlayer _sfxPlayer = AudioPlayer();
 
   late VideoPlayerController _gameVideoController;
 
@@ -92,9 +94,37 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void dispose() {
     _resolveTimer?.cancel();
+    _sfxPlayer.dispose();
     _gameVideoController.dispose();
     super.dispose();
   }
+
+  void _playSwipeSfx() {
+    final volume = _settings.sfxVolume;
+    if (volume > 0) {
+      _sfxPlayer.stop();
+      _sfxPlayer.setVolume(volume);
+      _sfxPlayer.play(AssetSource('audio/card_swipe.wav'));
+    }
+  }
+
+  void _playHighScore(){
+    final volume = _settings.sfxVolume;
+    if (volume >0){
+      _sfxPlayer.stop();
+    _sfxPlayer.setVolume(volume);
+    _sfxPlayer.play(AssetSource('audio/high_score.wav'));
+    }
+  }
+  void _playLowScore(){
+    final volume = _settings.sfxVolume;
+    if (volume >0){
+      _sfxPlayer.stop();
+      _sfxPlayer.setVolume(volume);
+      _sfxPlayer.play(AssetSource('audio/low_score.wav'));
+    }
+  }
+
 
   Future<void> _loadCards() async {
     try {
@@ -188,6 +218,9 @@ class _GameScreenState extends State<GameScreen> {
 
     if (session == null || session.awaitingNext) return;
 
+    _playSwipeSfx();
+
+    session.answer(side);
     final currentCard = session.current;
     final feedback = session.answer(side);
 
@@ -253,6 +286,10 @@ class _GameScreenState extends State<GameScreen> {
 
     if (session == null) return;
 
+    if (session.correctCount < 5) {
+      _playLowScore();
+    } else {
+      _playHighScore();
     final newlyUnlocked = _settings.achievements.recordGameCompleted();
     if (newlyUnlocked != null) {
       _showAchievementPopup(newlyUnlocked);

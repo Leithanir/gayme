@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -196,24 +197,35 @@ class MainMenu extends StatefulWidget {
 }
 
 class _MainMenuState extends State<MainMenu>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _rainbowController;
+  final AudioPlayer _bgmPlayer = AudioPlayer();
+  bool _isPlayerInitialized = false;
 
   late final VideoPlayerController _menuVideoController;
 
   late AppSettings _settings;
+  AppSettings? _subscribedSettings;
 
   bool get isFilipino => _settings.isFilipino;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     _rainbowController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 5),
     )..repeat();
 
+    _initBgm();
+  }
+
+  Future<void> _initBgm() async {
+    await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
+    _isPlayerInitialized = true;
+    _updateBgmState();
     _menuVideoController = VideoPlayerController.asset(
       'assets/videos/MainMenu.mp4',
     );
@@ -243,6 +255,43 @@ class _MainMenuState extends State<MainMenu>
   void didChangeDependencies() {
     super.didChangeDependencies();
 
+    final newSettings = SettingsScope.of(context);
+    if (_subscribedSettings != newSettings) {
+      _subscribedSettings?.removeListener(_onSettingsChanged);
+      _subscribedSettings = newSettings;
+      _subscribedSettings?.addListener(_onSettingsChanged);
+    }
+    _settings = newSettings;
+    _updateBgmState();
+  }
+
+  void _onSettingsChanged() {
+    _updateBgmState();
+  }
+
+  void _updateBgmState() {
+    if (!_isPlayerInitialized) return;
+
+    final volume = _settings.musicVolume;
+    if (volume > 0) {
+      _bgmPlayer.setVolume(volume);
+      if (_bgmPlayer.state != PlayerState.playing) {
+        _bgmPlayer.play(AssetSource('audio/game_bgm.mp3'));
+      }
+    } else {
+      if (_bgmPlayer.state == PlayerState.playing) {
+        _bgmPlayer.pause();
+      }
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _bgmPlayer.pause();
+    } else if (state == AppLifecycleState.resumed) {
+      _updateBgmState();
     _settings = SettingsScope.of(context);
 
     final animation = ModalRoute.of(context)?.animation;
@@ -269,8 +318,16 @@ class _MainMenuState extends State<MainMenu>
     }
   }
 
+  final AudioPlayer _sfxPlayer = AudioPlayer();
+
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _subscribedSettings?.removeListener(_onSettingsChanged);
+    _bgmPlayer.stop();
+    _bgmPlayer.dispose();
+    _sfxPlayer.dispose();
     _routeAnimation?.removeStatusListener(_animationStatusListener);
     _rainbowController.dispose();
     _menuVideoController.dispose();
@@ -528,6 +585,9 @@ class _MainMenuState extends State<MainMenu>
     );
   }
 
+  Future<void> startGame() async {
+
+    await Navigator.push(
   // ============================================================
   // START GAME
   // ============================================================
@@ -539,6 +599,7 @@ class _MainMenuState extends State<MainMenu>
         builder: (context) => const GameScreen(),
       ),
     );
+    _updateBgmState();
   }
 
   // ============================================================
@@ -546,6 +607,7 @@ class _MainMenuState extends State<MainMenu>
   // ============================================================
 
   void showAchievements() {
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -559,6 +621,7 @@ class _MainMenuState extends State<MainMenu>
   // ============================================================
 
   void confirmExit() {
+
     showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
@@ -644,6 +707,7 @@ class _MainMenuState extends State<MainMenu>
   // ============================================================
 
   void showSettings() {
+
     showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
@@ -912,6 +976,7 @@ class _MainMenuState extends State<MainMenu>
   // ============================================================
 
   void showHowToPlay() {
+
     showInfoDialog(
       isFilipino
           ? 'PAANO MAGLARO'
@@ -931,6 +996,7 @@ class _MainMenuState extends State<MainMenu>
   // ============================================================
 
   void showCredits() {
+
     showInfoDialog(
       isFilipino
           ? 'MGA KREDITO'
