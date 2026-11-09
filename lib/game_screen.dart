@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import 'app_settings.dart';
+import 'achievement_system.dart';
 import 'content/situation.dart';
 import 'content/situation_repository.dart';
 import 'game/game_session.dart';
@@ -110,7 +111,7 @@ class _GameScreenState extends State<GameScreen> {
         _isAnimatingOut = false;
         _resetDrag();
       });
-      _settings.recordGameStarted();
+      _settings.achievements.recordGameStarted();
     } catch (error) {
       if (!mounted) return;
 
@@ -146,7 +147,7 @@ class _GameScreenState extends State<GameScreen> {
       _isAnimatingOut = false;
       _resetDrag();
     });
-    _settings.recordGameStarted();
+    _settings.achievements.recordGameStarted();
   }
 
   void _resetDrag() {
@@ -190,12 +191,12 @@ class _GameScreenState extends State<GameScreen> {
     final currentCard = session.current;
     final feedback = session.answer(side);
 
-    final elapsed = _settings.cardStartTime != null
-        ? DateTime.now().difference(_settings.cardStartTime!).inMilliseconds / 1000.0
+    final elapsed = _settings.achievements.cardStartTime != null
+        ? DateTime.now().difference(_settings.achievements.cardStartTime!).inMilliseconds / 1000.0
         : 1.0;
 
     if (currentCard != null) {
-      final unlocked = _settings.recordAnswer(
+      final unlocked = _settings.achievements.recordAnswer(
         situationId: currentCard.id,
         isStereotype: currentCard.kind == SituationKind.stereotype,
         isCorrect: feedback.isCorrect,
@@ -227,7 +228,7 @@ class _GameScreenState extends State<GameScreen> {
         _dragOffset = 0;
         _dragY = 0;
       });
-      _settings.incrementExplanationsRead();
+      _settings.achievements.incrementExplanationsRead();
     });
   }
 
@@ -252,7 +253,7 @@ class _GameScreenState extends State<GameScreen> {
 
     if (session == null) return;
 
-    final newlyUnlocked = _settings.recordGameCompleted();
+    final newlyUnlocked = _settings.achievements.recordGameCompleted();
     if (newlyUnlocked != null) {
       _showAchievementPopup(newlyUnlocked);
     }

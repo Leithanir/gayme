@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 import 'app_settings.dart';
 import 'game_screen.dart';
 import 'achievement_screen.dart';
+import 'achievement_system.dart';
 
 const List<Shadow> comicShadows = [
   Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0),
@@ -363,7 +364,7 @@ class _MainMenuState extends State<MainMenu>
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    '${AppSettings.allAchievements.where((a) => _settings.isUnlocked(a.id)).length} / ${AppSettings.allAchievements.length}',
+                                    '${AchievementManager.allAchievements.where((a) => _settings.achievements.isUnlocked(a.id)).length} / ${AchievementManager.allAchievements.length}',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 12,
@@ -377,10 +378,10 @@ class _MainMenuState extends State<MainMenu>
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(6),
                                       child: LinearProgressIndicator(
-                                        value: AppSettings.allAchievements
-                                            .where((a) => _settings.isUnlocked(a.id))
+                                        value: AchievementManager.allAchievements
+                                            .where((a) => _settings.achievements.isUnlocked(a.id))
                                             .length /
-                                            AppSettings.allAchievements.length,
+                                            AchievementManager.allAchievements.length,
                                         minHeight: 5,
                                         backgroundColor:
                                         Colors.white.withValues(alpha: 0.15),

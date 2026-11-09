@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'app_settings.dart';
+import 'achievement_system.dart';
 
 const List<Shadow> comicShadows = [
   Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0),
@@ -58,9 +59,9 @@ class _AchievementScreenState extends State<AchievementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final achievements = AppSettings.allAchievements;
+    final achievements = AchievementManager.allAchievements;
     final unlockedCount = achievements
-        .where((a) => _settings.isUnlocked(a.id))
+        .where((a) => _settings.achievements.isUnlocked(a.id))
         .length;
 
     return Scaffold(
@@ -102,9 +103,9 @@ class _AchievementScreenState extends State<AchievementScreen> {
                     itemCount: achievements.length,
                     itemBuilder: (context, index) {
                       final achievement = achievements[index];
-                      final bool unlocked = _settings.isUnlocked(achievement.id);
+                      final bool unlocked = _settings.achievements.isUnlocked(achievement.id);
                       final Color color = achievement.color;
-                      final progressStr = _settings.getProgressString(achievement.id);
+                      final progressStr = _settings.achievements.getProgressString(achievement.id);
 
                       return CustomPaint(
                         foregroundPainter: _ThickComicBorderPainter(
