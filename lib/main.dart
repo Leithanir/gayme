@@ -940,6 +940,7 @@ class _MainMenuState extends State<MainMenu>
           'Ginawa ng TEAM MAKKI.\n\n'
           'Dorencio, Willmoore B.\n'
           'Francis, Jade Rhyss D.\n'
+          'Luana, Macklien A.\n'
           'Quintero, Genesis Joed T\n.'
           'Tundagui, Patrick jr .\n'
 
@@ -948,6 +949,7 @@ class _MainMenuState extends State<MainMenu>
           'Developed by TEAM MAKKI.\n\n'
           'Dorencio, Willmoore B.\n'
           'Francis, Jade Rhyss D.\n'
+          'Luana, Macklien A.\n'
           'Quintero, Genesis Joed T.\n'
           'Tundagui, Patrick jr .\n'
     );
