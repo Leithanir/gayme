@@ -194,7 +194,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF111126).withValues(alpha: 0.45),
+              color: const Color(0xFF3A0B4F).withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Column(
@@ -289,7 +289,7 @@ class _MissedCard extends StatelessWidget {
 
     return CustomPaint(
       foregroundPainter: _ThickComicBorderPainter(
-        color: const Color(0xFFFFD740),
+        color: ResultsScreen.neonPink,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -299,7 +299,7 @@ class _MissedCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF111126).withValues(alpha: 0.45),
+              color: const Color(0xFF3A0B4F).withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -321,7 +321,7 @@ class _MissedCard extends StatelessWidget {
                       ? 'Pinili mo: ${_sideLabel(feedback.chosen)}  •  Tama: ${_sideLabel(correctSide)}'
                       : 'You chose: ${_sideLabel(feedback.chosen)}  •  Correct: ${_sideLabel(correctSide)}',
                   style: const TextStyle(
-                    color: Color(0xFFFFD740),
+                    color: ResultsScreen.neonPink,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
