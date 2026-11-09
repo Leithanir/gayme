@@ -7,8 +7,6 @@ import 'app_settings.dart';
 import 'game_screen.dart';
 import 'achievement_screen.dart';
 
-import 'game/achievement_service.dart';
-
 void main() {
   runApp(const StereotypicalApp());
 }
@@ -31,18 +29,10 @@ class StereotypicalApp extends StatefulWidget {
 
 class _StereotypicalAppState extends State<StereotypicalApp> {
   final AppSettings _settings = AppSettings();
-  final AchievementService _achievementService = AchievementService();
-
-  @override
-  void initState() {
-    super.initState();
-    _achievementService.init();
-  }
 
   @override
   void dispose() {
     _settings.dispose();
-    _achievementService.dispose();
     super.dispose();
   }
 
@@ -50,18 +40,15 @@ class _StereotypicalAppState extends State<StereotypicalApp> {
   Widget build(BuildContext context) {
     return SettingsScope(
       settings: _settings,
-      child: AchievementScope(
-        service: _achievementService,
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Stereotypical',
-          theme: ThemeData(
-            brightness: Brightness.dark,
-            useMaterial3: true,
-            fontFamily: 'Arial',
-          ),
-          home: const MainMenu(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Stereotypical',
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          useMaterial3: true,
+          fontFamily: 'Arial',
         ),
+        home: const MainMenu(),
       ),
     );
   }

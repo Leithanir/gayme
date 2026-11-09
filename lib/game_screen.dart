@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'app_settings.dart';
 import 'content/situation.dart';
 import 'content/situation_repository.dart';
-import 'game/achievement_service.dart';
 import 'game/game_session.dart';
 import 'results_screen.dart';
 
@@ -228,9 +227,6 @@ class _GameScreenState extends State<GameScreen> {
     final session = _session;
 
     if (session == null) return;
-
-    final achievementService = AchievementScope.maybeOf(context);
-    achievementService?.recordSession(session, isFilipino: _settings.isFilipino);
 
     if (session.correctCount < 5) {
       _playLowScore();
