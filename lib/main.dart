@@ -937,11 +937,19 @@ class _MainMenuState extends State<MainMenu>
           : 'CREDITS',
       isFilipino
           ? 'STEREOTYPICAL\n\n'
-          'Binuo ng inyong pangkat.\n\n'
-          'Idagdag dito ang mga miyembro ng pangkat at mga pagkilala.'
+          'Ginawa ng TEAM MAKKI.\n\n'
+          'Dorencio, Willmoore B.\n'
+          'Francis, Jade Rhyss D.\n'
+          'Quintero, Genesis Joed T\n.'
+          'Tundagui, Patrick jr .\n'
+
+
           : 'STEREOTYPICAL\n\n'
-          'Developed by your project team.\n\n'
-          'Add your team members and acknowledgments here.',
+          'Developed by TEAM MAKKI.\n\n'
+          'Dorencio, Willmoore B.\n'
+          'Francis, Jade Rhyss D.\n'
+          'Quintero, Genesis Joed T.\n'
+          'Tundagui, Patrick jr .\n'
     );
   }
 
