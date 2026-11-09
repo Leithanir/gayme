@@ -686,8 +686,7 @@ class _MainMenuState extends State<MainMenu>
                           borderRadius:
                           BorderRadius.circular(28),
                           border: Border.all(
-                            color: Colors.white
-                                .withValues(alpha: 0.28),
+                            color: Colors.black,
                             width: 1.2,
                           ),
                           boxShadow: [
@@ -1381,10 +1380,7 @@ class _GlassDialog
                     28,
                   ),
                   border: Border.all(
-                    color: Colors.white
-                        .withValues(
-                      alpha: 0.28,
-                    ),
+                    color: Colors.black,
                     width: 1.2,
                   ),
                   boxShadow: [

@@ -519,7 +519,7 @@ class _GameScreenState extends State<GameScreen> {
                               .withValues(alpha: 0.20),
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.28),
+                            color: Colors.black,
                             width: 1.2,
                           ),
                           boxShadow: [
@@ -854,7 +854,7 @@ class _GameScreenState extends State<GameScreen> {
             right: 0,
             top: 0,
             child: Transform.translate(
-              offset: const Offset(0, 35),
+              offset: const Offset(0, 23),
               child: SizedBox(
                 height: 50,
                 width: double.infinity,
@@ -1001,8 +1001,9 @@ class _GameScreenState extends State<GameScreen> {
                 : 'Swipe the card toward the side it belongs to.',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFFE6B4FF),
+              color: Colors.white,
               fontSize: 13,
+              fontWeight: FontWeight.bold,
               shadows: comicShadows,
             ),
           ),
@@ -1259,32 +1260,42 @@ class _GameScreenState extends State<GameScreen> {
           padding: const EdgeInsets.all(14),
           child: CustomPaint(
             foregroundPainter: _NeonRainbowBorderPainter(),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.025),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 22,
-                vertical: 24,
-              ),
-              child: Center(
-                child: Text(
-                  text,
-                  textAlign: TextAlign.center,
-                  maxLines: 12,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: _cardFontSize(text),
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
-                    shadows: const [
-                      Shadow(
-                        color: Color(0xFFFF00E6),
-                        blurRadius: 12,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: 16,
+                  sigmaY: 16,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF111126)
+                        .withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 24,
+                  ),
+                  child: Center(
+                    child: Text(
+                      text,
+                      textAlign: TextAlign.center,
+                      maxLines: 12,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: _cardFontSize(text),
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                        shadows: const [
+                          Shadow(
+                            color: Color(0xFFFF00E6),
+                            blurRadius: 12,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -1707,7 +1718,7 @@ class _GlassDialog extends StatelessWidget {
                   color: const Color(0xFF111126).withValues(alpha: 0.20),
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.28),
+                    color: Colors.black,
                     width: 1.2,
                   ),
                   boxShadow: [

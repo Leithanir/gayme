@@ -163,7 +163,7 @@ class _AchievementScreenState extends State<AchievementScreen> {
                                       const Text(
                                         '??????????',
                                         style: TextStyle(
-                                          color: Colors.white54,
+                                          color: Colors.white,
                                           fontSize: 13,
                                           fontWeight: FontWeight.bold,
                                           letterSpacing: 2,
@@ -177,6 +177,7 @@ class _AchievementScreenState extends State<AchievementScreen> {
                                           style: const TextStyle(
                                             color: Color(0xFF00E5FF),
                                             fontSize: 11,
+                                            fontWeight: FontWeight.bold,
                                             fontStyle: FontStyle.italic,
                                             shadows: comicShadows,
                                           ),
@@ -186,8 +187,9 @@ class _AchievementScreenState extends State<AchievementScreen> {
                                       Text(
                                         achievement.task,
                                         style: const TextStyle(
-                                          color: Colors.white70,
+                                          color: Colors.white,
                                           fontSize: 12,
+                                          fontWeight: FontWeight.bold,
                                           height: 1.4,
                                           shadows: comicShadows,
                                         ),
@@ -199,6 +201,7 @@ class _AchievementScreenState extends State<AchievementScreen> {
                                           style: const TextStyle(
                                             color: Color(0xFF00E5FF),
                                             fontSize: 11,
+                                            fontWeight: FontWeight.bold,
                                             fontStyle: FontStyle.italic,
                                             shadows: comicShadows,
                                           ),
